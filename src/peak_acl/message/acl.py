@@ -1,25 +1,22 @@
-# src/peak_acl/message/acl.py
 """
-Modelo completo de mensagem FIPA-ACL para o peak_acl.
+Modelo completo de mensagem FIPA‑ACL para o peak_acl.
 
-Compatível com JADE:
-- Todos os slots FIPA (performative, sender, receiver, reply-to, ...)
-- Campos opcionais = None quando ausentes
-- receivers / reply_to = listas de AgentIdentifier
-- Acesso estilo msg["content"] suportado para retro-compatibilidade
+• Compatível com JADE
+• Todos os slots FIPA (performative, sender, receiver, reply‑to, …)
+• receivers / reply_to = listas de AgentIdentifier
+• Acesso estilo‑dict (msg["content"]) e helpers msg.get(), "slot" in msg
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from .aid import AgentIdentifier
 
-
 # --------------------------------------------------------------------------- #
-#  Util performativa -> formato padrão FIPA (UPPERCASE, hífens)
+#  Util: normalizar performativa para formato FIPA (UPPERCASE, hífens)
 # --------------------------------------------------------------------------- #
 def _norm_performative(p: str) -> str:
     return p.strip().upper().replace("_", "-")
@@ -27,6 +24,9 @@ def _norm_performative(p: str) -> str:
 
 @dataclass
 class AclMessage:
+    # ------------------------------------------------------------------ #
+    # Slots FIPA‑ACL
+    # ------------------------------------------------------------------ #
     performative: str
 
     # Agentes
@@ -34,8 +34,8 @@ class AclMessage:
     receivers: List[AgentIdentifier] = field(default_factory=list)
     reply_to: List[AgentIdentifier] = field(default_factory=list)
 
-    # Conteúdo e meta
-    content: Optional[Any] = None          # str | bytes | objeto | AclMessage
+    # Conteúdo e meta‑info
+    content: Optional[Any] = None            # str | bytes | object | AclMessage
     language: Optional[str] = None
     encoding: Optional[str] = None
     ontology: Optional[str] = None
@@ -47,12 +47,14 @@ class AclMessage:
     in_reply_to: Optional[str] = None
     reply_by: Optional[datetime] = None
 
-    # Parâmetros definidos pelo utilizador / extensões X-
+    # Campos definidos pelo utilizador / extensões X‑
     user_params: Dict[str, Any] = field(default_factory=dict)
 
     # Texto original (debug opcional)
     raw_text: Optional[str] = None
 
+    # ------------------------------------------------------------------ #
+    # Utilidade
     # ------------------------------------------------------------------ #
     def add_receiver(self, aid: AgentIdentifier) -> None:
         self.receivers.append(aid)
@@ -64,7 +66,9 @@ class AclMessage:
     def performative_upper(self) -> str:
         return _norm_performative(self.performative)
 
-    # --- Acesso tipo dicionário (retro-compat.) ----------------------- #
+    # ------------------------------------------------------------------ #
+    # Acesso estilo‑dict (retro‑compat.)
+    # ------------------------------------------------------------------ #
     def __getitem__(self, key: str):
         k = key.lower()
         if k == "content":
@@ -109,3 +113,26 @@ class AclMessage:
             self.reply_by = value
         else:
             self.user_params[k] = value
+
+    # ------------------------------------------------------------------ #
+    # Helpers estilo‑dict moderno
+    # ------------------------------------------------------------------ #
+    def get(self, key: str, default: Any = None):
+        """
+        Equivalente a dict.get(): devolve o slot pedido ou *default*
+        caso não exista.
+        """
+        try:
+            return self[key]
+        except KeyError:
+            return default
+
+    def __contains__(self, key: str) -> bool:
+        """
+        Permite usar `"slot" in msg`.
+        """
+        try:
+            self[key]
+            return True
+        except KeyError:
+            return False
