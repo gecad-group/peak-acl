@@ -12,8 +12,7 @@ from .message.acl import AclMessage
 from .transport.http_mtp import HttpMtpServer, start_server
 from .transport.http_client import HttpMtpClient
 from . import df_manager, sl0
-from . import events, router            # ←  NOVOS módulos
-
+from . import event, router           
 # ------------------------------------------------------------------ #
 # util
 # ------------------------------------------------------------------ #
@@ -27,7 +26,7 @@ def _first_url(ai: AgentIdentifier) -> str:
 # Endpoint de comunicação (server inbound + client outbound)
 # ------------------------------------------------------------------ #
 @dataclass
-class CommEndpoint(AsyncIterator[events.MsgEvent]):
+class CommEndpoint(AsyncIterator[event.MsgEvent]):
     my_aid: AgentIdentifier
     inbox: asyncio.Queue                 # fila inbound (Envelope, AclMessage)
     client: HttpMtpClient                # outbound
@@ -147,11 +146,11 @@ class CommEndpoint(AsyncIterator[events.MsgEvent]):
     def __aiter__(self):
         return self
 
-    async def __anext__(self) -> events.MsgEvent:        # noqa: D401
+    async def __anext__(self) -> event.MsgEvent:        # noqa: D401
         """Bloqueia até chegar uma mensagem e devolve MsgEvent."""
         env, acl = await self.inbox.get()
         kind, payload = router.classify_message(env, acl, self.df_aid)
-        return events.MsgEvent(env, acl, env.from_, kind, payload)
+        return event.MsgEvent(env, acl, env.from_, kind, payload)
 
     # ------------------------------------------------------------------ #
     async def close(self):
