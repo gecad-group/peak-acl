@@ -14,7 +14,7 @@ Mantém TODA a lógica de:
 from __future__ import annotations
 from typing import Tuple, Any
 
-from .events import Kind
+from .event import Kind
 from .message.envelope import Envelope
 from .message.acl import AclMessage
 from .message.aid import AgentIdentifier
