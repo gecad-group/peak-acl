@@ -21,7 +21,7 @@ Kind = Literal[
 ]
 
 
-@dataclass(slots=True)
+@dataclass
 class MsgEvent:
     """Mensagem já classificada pelo runtime."""
     env:      Envelope
