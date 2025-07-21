@@ -55,7 +55,7 @@ def classify_message(
     # ------------------------------------------------------------------ #
     # Mensagens de outros agentes
     # ------------------------------------------------------------------ #
-    lang = acl.get("language", "").lower() if "language" in acl else ""
+    lang = str(acl.params.get("language", "")).lower()
 
     if lang == "fipa-sl0":
         try:
