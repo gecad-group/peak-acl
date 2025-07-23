@@ -4,8 +4,10 @@ src/peak_acl/__init__.py
 src/peak_acl/content.py
 src/peak_acl/conversation.py
 src/peak_acl/df_manager.py
+src/peak_acl/dispatcher.py
 src/peak_acl/event.py
 src/peak_acl/fipa_am.py
+src/peak_acl/message_template.py
 src/peak_acl/parse.py
 src/peak_acl/parse_helpers.py
 src/peak_acl/router.py

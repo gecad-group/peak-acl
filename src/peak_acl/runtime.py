@@ -1,11 +1,8 @@
-# peak_acl/runtime.py
 from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import (
-    Sequence, Tuple, Optional, Iterable, Union, AsyncIterator, Callable,
-)
+from typing import Sequence, Tuple, Optional, Iterable, Union, AsyncIterator
 
 import aiohttp.web
 
@@ -13,12 +10,12 @@ from .message.aid import AgentIdentifier
 from .message.acl import AclMessage
 from .transport.http_mtp import HttpMtpServer, start_server
 from .transport.http_client import HttpMtpClient
-from . import df_manager, sl0
-from . import event, router
-from .conversation import ConversationManager   #  <-- novo import
+from . import df_manager, sl0, event, router
+from .dispatcher import InboundDispatcher, Callback
+from .message_template import MessageTemplate
+from .conversation import ConversationManager  # já existia no ponto 4
 
-# ------------------------------------------------------------------ #
-# util
+
 # ------------------------------------------------------------------ #
 def _first_url(ai: AgentIdentifier) -> str:
     if not ai.addresses:
@@ -27,33 +24,26 @@ def _first_url(ai: AgentIdentifier) -> str:
 
 
 # ------------------------------------------------------------------ #
-# Endpoint de comunicação (server inbound + client outbound)
-# ------------------------------------------------------------------ #
 @dataclass
 class CommEndpoint(AsyncIterator[event.MsgEvent]):
-    """Objecto principal de I/O para o agente."""
+    """Endpoint = (HTTP‑MTP server + client + helpers)."""
 
-    # --- campos base ------------------------------------------------- #
     my_aid: AgentIdentifier
-    inbox: asyncio.Queue[Tuple[object, AclMessage]]  # (Envelope, AclMessage)
+    inbox: asyncio.Queue                     # Envelopes que chegam
     client: HttpMtpClient
     server: HttpMtpServer
     runner: aiohttp.web.AppRunner
     site: aiohttp.web.TCPSite
+    df_aid: Optional[AgentIdentifier] = field(default=None)
 
-    # --- opcionais --------------------------------------------------- #
-    df_aid: Optional[AgentIdentifier] = None
-    conv_mgr: Optional[ConversationManager] = None   # <– gestor de conversas
+    # — NOVO —
+    dispatcher: InboundDispatcher = field(default_factory=InboundDispatcher)
+    conv_mgr: ConversationManager | None = None
 
-    # ------------------- DF helpers ---------------------------------- #
-    async def register_df(
-        self,
-        df_aid: AgentIdentifier,
-        services: Iterable[Tuple[str, str]],
-        *,
-        df_url: str | None = None,
-        languages=(), ontologies=(), protocols=(), ownership=(),
-    ):
+    # ------------------- DF helpers ------------------------------ #
+    async def register_df(self, df_aid, services, *,
+                          df_url=None, languages=(), ontologies=(),
+                          protocols=(), ownership=()):
         await df_manager.register(
             my_aid=self.my_aid,
             df_aid=df_aid,
@@ -66,31 +56,8 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
             df_url=df_url,
         )
 
-    async def deregister_df(
-        self,
-        df_aid: AgentIdentifier | None = None,
-        *,
-        df_url: str | None = None,
-    ):
-        df_ai = df_aid or self.df_aid
-        if df_ai is None:
-            raise ValueError("deregister_df() sem df_aid definido.")
-        await df_manager.deregister(
-            my_aid=self.my_aid,
-            df_aid=df_ai,
-            http_client=self.client,
-            df_url=df_url,
-        )
-
-    async def search_df(
-        self,
-        *,
-        service_name: str | None = None,
-        service_type: str | None = None,
-        max_results: int | None = None,
-        df_aid: AgentIdentifier | None = None,
-        df_url: str | None = None,
-    ):
+    async def search_df(self, *, service_name=None, service_type=None,
+                        max_results=None, df_aid=None, df_url=None):
         df_ai = df_aid or self.df_aid
         if df_ai is None:
             raise ValueError("search_df() sem df_aid definido.")
@@ -104,36 +71,40 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
             df_url=df_url,
         )
 
-    # ------------------- ACL genérico -------------------------------- #
+    async def deregister_df(self, df_aid=None, *, df_url=None):
+        df_ai = df_aid or self.df_aid
+        if df_ai is None:
+            raise ValueError("deregister_df() sem df_aid definido.")
+        await df_manager.deregister(
+            my_aid=self.my_aid,
+            df_aid=df_ai,
+            http_client=self.client,
+            df_url=df_url,
+        )
+
+    # ------------------- ACL genérico ---------------------------- #
     async def send_acl(
         self,
         *,
         to: Union[AgentIdentifier, Iterable[AgentIdentifier]],
         performative: str,
-        content: str | object | None = None,
-        language: str | None = None,
-        ontology: str | None = None,
-        protocol: str | None = None,
-        conversation_id: str | None = None,
-        reply_with: str | None = None,
-        in_reply_to: str | None = None,
-        reply_by: str | None = None,
+        content=None,
+        language: Optional[str] = None,
+        ontology: Optional[str] = None,
+        protocol: Optional[str] = None,
+        conversation_id: Optional[str] = None,
+        reply_with: Optional[str] = None,
+        in_reply_to: Optional[str] = None,
+        reply_by: Optional[str] = None,
     ) -> AclMessage:
-        """
-        Envia uma mensagem ACL genérica.
+        if isinstance(to, AgentIdentifier):
+            receivers = [to]
+        else:
+            receivers = list(to)
+            if not receivers:
+                raise ValueError("send_acl() sem receivers.")
 
-        `content`:
-          • str          → usado tal-e-qual
-          • outro object → serializado via sl0.dumps()
-          • None         → sem slot :content
-        """
-        # normaliza recetores
-        receivers = [to] if isinstance(to, AgentIdentifier) else list(to)
-        if not receivers:
-            raise ValueError("send_acl() precisa de pelo menos 1 recetor")
-
-        # serializa conteúdo
-        content_str: str | None
+        # serialização opcional SL0
         if content is None:
             content_str = None
         elif isinstance(content, str):
@@ -155,58 +126,57 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
             reply_by=reply_by,
         )
 
-        # envia POST por recetor
         for r in receivers:
             await self.client.send(r, self.my_aid, msg, _first_url(r))
+
         return msg
 
-    # ------------------- Conversation proxy -------------------------- #
+    # ------------------- Conversation sugar ---------------------- #
     async def send_request(self, **kw):
-        """
-        Envia REQUEST e devolve (agree|refuse, inform|failure).
-
-        Wrapper sobre ConversationManager.
-        """
-        if self.conv_mgr is None:
+        """Atalho p/ ConversationManager.send_request()."""
+        if not self.conv_mgr:
             raise RuntimeError("ConversationManager não inicializado.")
         return await self.conv_mgr.send_request(sender=self.my_aid, **kw)
 
-    # ----------------------- iterator interface ---------------------- #
+    # ------------------- handlers (ponto 5) ---------------------- #
+    def register_handler(
+        self,
+        *,
+        performative: str | None = None,
+        protocol: str | None = None,
+        ontology: str | None = None,
+        cb: Callback,
+    ) -> None:
+        tmpl = MessageTemplate(
+            performative=performative,
+            protocol=protocol,
+            ontology=ontology,
+        )
+        self.dispatcher.add(tmpl, cb)
+
+    # ------------------- iterator interface ---------------------- #
     def __aiter__(self):
         return self
 
-    async def __anext__(self) -> event.MsgEvent:            # noqa: D401
-        """Bloqueia até chegar uma mensagem e devolve MsgEvent."""
+    async def __anext__(self) -> event.MsgEvent:
         env, acl = await self.inbox.get()
+
+        # primeiro tenta templates registados (ponto 5)
+        if await self.dispatcher.dispatch(env.from_, acl):
+            return await self.__anext__()            # salta para próxima
+
+        # caso contrário segue fluxo normal
         kind, payload = router.classify_message(env, acl, self.df_aid)
-
-        # ---------- Conversation manager (entrada) -------------------
-        if hasattr(self, "conv_mgr"):
-            # Garante que o campo sender está presente
-            if acl.sender is None:
-                acl.sender = env.from_
-
-            if hasattr(self.conv_mgr, "on_message"):
-                # API recente: aceita apenas (acl)
-                try:
-                    self.conv_mgr.on_message(acl)
-                except TypeError:
-                    # fallback para versões antigas com (sender, acl)
-                    self.conv_mgr.on_message(env.from_, acl)
-            elif hasattr(self.conv_mgr, "feed"):
-                # API ainda mais antiga
-                self.conv_mgr.feed(env.from_, acl)
-
+        if self.conv_mgr:
+            self.conv_mgr.on_message(env.from_, acl)    # para ponto 4
         return event.MsgEvent(env, acl, env.from_, kind, payload)
 
-    # ------------------------------------------------------------------ #
+    # ------------------------------------------------------------- #
     async def close(self):
         await self.runner.cleanup()
         await self.client.close()
 
 
-# ------------------------------------------------------------------ #
-# Arrancar endpoint
 # ------------------------------------------------------------------ #
 async def start_endpoint(
     *,
@@ -218,11 +188,6 @@ async def start_endpoint(
     http_client: Optional[HttpMtpClient] = None,
     loop=None,
 ) -> CommEndpoint:
-    """
-    Cria server inbound + cliente outbound + inbox.
-    Se `auto_register` estiver True, envia REQUEST register ao DF.
-    """
-    # --- resolve porta a partir do 1º endereço HTTP publicado -------- #
     from urllib.parse import urlparse
 
     u = urlparse(my_aid.addresses[0])
@@ -230,10 +195,7 @@ async def start_endpoint(
 
     client = http_client or HttpMtpClient()
     server, runner, site = await start_server(
-        on_message=None,
-        bind_host=bind_host,
-        port=port,
-        loop=loop,
+        on_message=None, bind_host=bind_host, port=port, loop=loop
     )
 
     ep = CommEndpoint(
@@ -246,20 +208,19 @@ async def start_endpoint(
         df_aid=df_aid,
     )
 
-    # -------- instancia ConversationManager -------------------------- #
-    async def _low_level_send(msg: AclMessage, dst_url: str):
-        """Função de envio utilizada pelo ConversationManager."""
-        await client.send(msg.receivers[0], my_aid, msg, dst_url)
+    # -------- ConversationManager (ponto 4) ----------
+    async def _low_level_send(dst: AgentIdentifier, msg: AclMessage):
+        await client.send(dst, my_aid, msg, _first_url(dst))
 
-    ep.conv_mgr = ConversationManager(_low_level_send)
+    ep.conv_mgr = ConversationManager(send=_low_level_send)
 
-    # ---------------- auto-register DF ------------------------------- #
+    # -------- auto‑register opcional ----------
     if auto_register:
         if df_aid is None:
             raise ValueError("auto_register=True mas df_aid=None")
         await ep.register_df(
-            df_aid=df_aid,
-            services=services or [],
+            df_aid,
+            services or [],
             df_url=df_aid.addresses[0],
         )
 
