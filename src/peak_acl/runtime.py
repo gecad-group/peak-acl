@@ -236,7 +236,7 @@ async def start_endpoint(
         """Função de envio utilizada pelo ConversationManager."""
         await client.send(msg.receivers[0], my_aid, msg, dst_url)
 
-    ep.conv_mgr = ConversationManager(send_func=_low_level_send)
+    ep.conv_mgr = ConversationManager(_low_level_send)
 
     # ---------------- auto-register DF ------------------------------- #
     if auto_register:
