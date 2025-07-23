@@ -1,8 +1,16 @@
+# peak_acl/runtime.py
 from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass, field
-from typing import Sequence, Tuple, Optional, Iterable, Union, AsyncIterator
+from typing import (
+    Sequence,
+    Tuple,
+    Optional,
+    Iterable,
+    Union,
+    AsyncIterator,
+)
 
 import aiohttp.web
 
@@ -15,7 +23,6 @@ from .dispatcher import InboundDispatcher, Callback
 from .message_template import MessageTemplate
 from .conversation import ConversationManager
 
-
 # --------------------------------------------------------------------------- #
 def _first_url(ai: AgentIdentifier) -> str:
     if not ai.addresses:
@@ -26,24 +33,37 @@ def _first_url(ai: AgentIdentifier) -> str:
 # --------------------------------------------------------------------------- #
 @dataclass
 class CommEndpoint(AsyncIterator[event.MsgEvent]):
-    """Endpoint = HTTP‑MTP server + client + helpers."""
+    """
+    Endpoint = servidor HTTP‑MTP + cliente + helpers de alto‑nível.
+    Iterar sobre o endpoint devolve MsgEvent para quem preferir
+    modelo “pull”; em alternativa pode‑se usar register_handler().
+    """
 
     my_aid: AgentIdentifier
-    inbox: asyncio.Queue
+    inbox: asyncio.Queue                # (Envelope, AclMessage) que chegam
     client: HttpMtpClient
     server: HttpMtpServer
     runner: aiohttp.web.AppRunner
     site: aiohttp.web.TCPSite
-    df_aid: Optional[AgentIdentifier] = None
+    df_aid: Optional[AgentIdentifier] = field(default=None)
 
-    # ponto 5
+    # ponto 5
     dispatcher: InboundDispatcher = field(default_factory=InboundDispatcher)
-    conv_mgr: ConversationManager | None = None
+    conv_mgr:   ConversationManager | None = None
 
-    # ---------------- DF helpers ---------------- #
-    async def register_df(self, df_aid, services, *,
-                          df_url=None, languages=(), ontologies=(),
-                          protocols=(), ownership=()):
+    # ------------------------------------------------------------------ #
+    # ---------------- DF helpers -------------------------------------- #
+    async def register_df(
+        self,
+        df_aid,
+        services,
+        *,
+        df_url=None,
+        languages=(),
+        ontologies=(),
+        protocols=(),
+        ownership=(),
+    ):
         await df_manager.register(
             my_aid=self.my_aid,
             df_aid=df_aid,
@@ -56,8 +76,15 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
             df_url=df_url,
         )
 
-    async def search_df(self, *, service_name=None, service_type=None,
-                        max_results=None, df_aid=None, df_url=None):
+    async def search_df(
+        self,
+        *,
+        service_name=None,
+        service_type=None,
+        max_results=None,
+        df_aid=None,
+        df_url=None,
+    ):
         df_ai = df_aid or self.df_aid
         if df_ai is None:
             raise ValueError("search_df() sem df_aid definido.")
@@ -82,7 +109,8 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
             df_url=df_url,
         )
 
-    # ---------------- ACL genérico ---------------- #
+    # ------------------------------------------------------------------ #
+    # ---------------- envio ACL genérico ------------------------------ #
     async def send_acl(
         self,
         *,
@@ -97,11 +125,12 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
         in_reply_to: Optional[str] = None,
         reply_by: Optional[str] = None,
     ) -> AclMessage:
-
+        # normalizar recetores
         receivers = [to] if isinstance(to, AgentIdentifier) else list(to)
         if not receivers:
             raise ValueError("send_acl() sem receivers.")
 
+        # serializar conteúdo
         if content is None:
             content_str = None
         elif isinstance(content, str):
@@ -127,13 +156,19 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
             await self.client.send(r, self.my_aid, msg, _first_url(r))
         return msg
 
-    # --------------- Conversation sugar --------------- #
+    # ------------------------------------------------------------------ #
+    # ------------- açucar ConversationManager ------------------------- #
     async def send_request(self, **kw):
+        """
+        Atalho para ConversationManager.send_request().
+        Retorna um Future que resolve com a resposta INFORM/FAILURE.
+        """
         if not self.conv_mgr:
             raise RuntimeError("ConversationManager não inicializado.")
         return await self.conv_mgr.send_request(sender=self.my_aid, **kw)
 
-    # ---------------- Handler (ponto 5) ---------------- #
+    # ------------------------------------------------------------------ #
+    # ------------- handlers baseados em template (ponto 5) ------------- #
     def register_handler(
         self,
         *,
@@ -142,30 +177,35 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
         ontology: str | None = None,
         cb: Callback,
     ) -> None:
-        self.dispatcher.add(
-            MessageTemplate(performative, protocol, ontology),
-            cb,
+        tmpl = MessageTemplate(
+            performative=performative,
+            protocol=protocol,
+            ontology=ontology,
         )
+        self.dispatcher.add(tmpl, cb)
 
-    # ---------------- iterator interface -------------- #
+    # ------------------------------------------------------------------ #
+    # ------------- AsyncIterator interface ---------------------------- #
     def __aiter__(self):
         return self
 
     async def __anext__(self) -> event.MsgEvent:
         env, acl = await self.inbox.get()
 
-        # 1) tenta despachar por templates
+        # 1) tentar despachar para callbacks registados
         if await self.dispatcher.dispatch(env.from_, acl):
-            return await self.__anext__()     # já tratado → próxima msg
+            return await self.__anext__()          # já tratado → esperar outro
 
-        # 2) classifica e actualiza conversas
+        # 2) classificação de alto‑nível
         kind, payload = router.classify_message(env, acl, self.df_aid)
+
+        # 3) actualizar conversas (ponto 4)
         if self.conv_mgr:
-            self.conv_mgr.on_message(acl)     # NOTA: só passa acl
+            self.conv_mgr.on_message(acl)
 
         return event.MsgEvent(env, acl, env.from_, kind, payload)
 
-    # -------------------------------------------------- #
+    # ------------------------------------------------------------------ #
     async def close(self):
         await self.runner.cleanup()
         await self.client.close()
@@ -182,13 +222,21 @@ async def start_endpoint(
     http_client: Optional[HttpMtpClient] = None,
     loop=None,
 ) -> CommEndpoint:
-
+    """
+    Cria server inbound + cliente outbound + inbox.
+    Se auto_register=True envia REQUEST register ao DF.
+    """
     from urllib.parse import urlparse
-    port = urlparse(my_aid.addresses[0]).port or 80
+
+    u = urlparse(my_aid.addresses[0])
+    port = u.port or 80
 
     client = http_client or HttpMtpClient()
     server, runner, site = await start_server(
-        on_message=None, bind_host=bind_host, port=port, loop=loop
+        on_message=None,
+        bind_host=bind_host,
+        port=port,
+        loop=loop,
     )
 
     ep = CommEndpoint(
@@ -201,17 +249,24 @@ async def start_endpoint(
         df_aid=df_aid,
     )
 
-    # ConversationManager (corrigido) ------------------
+    # ---------- ConversationManager (ponto 4) ----------
     async def _low_level_send(msg: AclMessage, url: str | None):
+        """
+        Função mínima de envio usada internamente pelo ConversationManager.
+        """
         dst = msg.receivers[0]
         await client.send(dst, my_aid, msg, url or _first_url(dst))
 
     ep.conv_mgr = ConversationManager(send_fn=_low_level_send)
 
-    # Auto‑registo DF ----------------------------------
+    # ---------- auto‑register opcional ----------
     if auto_register:
         if df_aid is None:
             raise ValueError("auto_register=True mas df_aid=None")
-        await ep.register_df(df_aid, services or [], df_url=df_aid.addresses[0])
+        await ep.register_df(
+            df_aid,
+            services or [],
+            df_url=df_aid.addresses[0],
+        )
 
     return ep
