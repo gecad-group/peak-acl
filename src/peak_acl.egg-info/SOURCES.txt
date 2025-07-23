@@ -14,6 +14,8 @@ src/peak_acl/router.py
 src/peak_acl/runtime.py
 src/peak_acl/serialize.py
 src/peak_acl/sl0.py
+src/peak_acl/sl_parser.py
+src/peak_acl/sl_visitor.py
 src/peak_acl/types.py
 src/peak_acl/visitor.py
 src/peak_acl.egg-info/PKG-INFO
@@ -25,6 +27,10 @@ src/peak_acl/generated/ACLLexer.py
 src/peak_acl/generated/ACLListener.py
 src/peak_acl/generated/ACLParser.py
 src/peak_acl/generated/ACLVisitor.py
+src/peak_acl/generated/FipaSLLexer.py
+src/peak_acl/generated/FipaSLListener.py
+src/peak_acl/generated/FipaSLParser.py
+src/peak_acl/generated/FipaSLVisitor.py
 src/peak_acl/message/acl.py
 src/peak_acl/message/aid.py
 src/peak_acl/message/envelope.py
