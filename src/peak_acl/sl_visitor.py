@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import List, Any
 
-from antlr4 import ParseTree
+from antlr4.tree.Tree import ParseTree
 from .generated.FipaSLVisitor import FipaSLVisitor
 from .generated.FipaSLParser  import FipaSLParser
 
