@@ -182,10 +182,19 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
 
         # ---------- Conversation manager (entrada) -------------------
         if hasattr(self, "conv_mgr"):
-            # versões novas: on_message(); versões antigas: feed()
+            # Garante que o campo sender está presente
+            if acl.sender is None:
+                acl.sender = env.from_
+
             if hasattr(self.conv_mgr, "on_message"):
-                self.conv_mgr.on_message(env.from_, acl)
+                # API recente: aceita apenas (acl)
+                try:
+                    self.conv_mgr.on_message(acl)
+                except TypeError:
+                    # fallback para versões antigas com (sender, acl)
+                    self.conv_mgr.on_message(env.from_, acl)
             elif hasattr(self.conv_mgr, "feed"):
+                # API ainda mais antiga
                 self.conv_mgr.feed(env.from_, acl)
 
         return event.MsgEvent(env, acl, env.from_, kind, payload)
