@@ -175,13 +175,19 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
     def __aiter__(self):
         return self
 
-    async def __anext__(self) -> event.MsgEvent:  # noqa: D401
+    async def __anext__(self) -> event.MsgEvent:            # noqa: D401
         """Bloqueia até chegar uma mensagem e devolve MsgEvent."""
         env, acl = await self.inbox.get()
         kind, payload = router.classify_message(env, acl, self.df_aid)
-        # entrega também ao ConversationManager
-        if self.conv_mgr:
-            self.conv_mgr.feed(env.from_, acl)
+
+        # ---------- Conversation manager (entrada) -------------------
+        if hasattr(self, "conv_mgr"):
+            # versões novas: on_message(); versões antigas: feed()
+            if hasattr(self.conv_mgr, "on_message"):
+                self.conv_mgr.on_message(env.from_, acl)
+            elif hasattr(self.conv_mgr, "feed"):
+                self.conv_mgr.feed(env.from_, acl)
+
         return event.MsgEvent(env, acl, env.from_, kind, payload)
 
     # ------------------------------------------------------------------ #
