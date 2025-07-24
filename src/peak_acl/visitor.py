@@ -1,5 +1,14 @@
+# MIT License
+# Copyright (c) 2025 Santiago Bossa
+# See LICENSE file in the project root for full license text.
+
 # src/peak_acl/visitor.py
-"""Visitor ANTLR → AclMessage (modelo completo FIPA)."""
+"""ANTLR visitor → :class:`AclMessage` (full FIPA model).
+
+Walks the parse tree produced by ``ACLParser`` and builds an :class:`AclMessage`
+instance. Nested messages (e.g., ``agent-identifier`` inside slots) are kept as
+generic ``AclMessage`` objects for later coercion by helper functions.
+"""
 
 from __future__ import annotations
 
@@ -9,19 +18,27 @@ from .generated.ACLVisitor import ACLVisitor
 from .generated.ACLParser import ACLParser
 
 from .message.acl import AclMessage
-from .types import QuotedStr  # mantém compat
+from .types import QuotedStr  # keep compatibility
 from .parse_helpers import to_aid, to_aid_list, to_datetime
 
 
-# Slots permitidos ao nível raiz (case-insensitive)
+# Slots allowed at root level (case-insensitive)
 ALLOWED_ROOT = {
-    "sender", "receiver", "reply-to",
-    "content", "language", "encoding", "ontology",
-    "protocol", "conversation-id", "reply-with",
-    "in-reply-to", "reply-by",
+    "sender",
+    "receiver",
+    "reply-to",
+    "content",
+    "language",
+    "encoding",
+    "ontology",
+    "protocol",
+    "conversation-id",
+    "reply-with",
+    "in-reply-to",
+    "reply-by",
 }
 
-# Campos obrigatórios por performativa (mínimo)
+# Minimal mandatory slots by performative
 MANDATORY_ROOT = {
     "inform": {"content"},
     "request": {"content"},
@@ -30,8 +47,11 @@ MANDATORY_ROOT = {
 
 class MessageBuilder(ACLVisitor):
     """
-    Percorre a ParseTree produzida por ACLParser e constrói um AclMessage completo.
-    Usa _depth para distinguir a mensagem raiz de mensagens aninhadas (AIDs, ações...).
+    Visits the parse tree produced by ``ACLParser`` and builds a complete
+    :class:`AclMessage`.
+
+    Uses ``_depth`` to distinguish the root message from nested ones
+    (AIDs, actions, etc.): depth==1 → root.
     """
 
     def __init__(self, raw_text: str) -> None:
@@ -39,20 +59,21 @@ class MessageBuilder(ACLVisitor):
         self._depth = 0
         self._raw_text = raw_text
 
-    # --------------------------- mensagem ---------------------------------- #
+    # --------------------------- message ----------------------------------- #
     def visitACLmessage(self, ctx: ACLParser.ACLmessageContext) -> AclMessage:
+        """Build an ``AclMessage`` from the ``ACLmessage`` rule."""
         self._depth += 1
         try:
             perf = ctx.performative().SYMBOL().getText()
             perf_l = perf.lower()
 
-            # Recolhe params
+            # Collect params
             params: Dict[str, Any] = {}
             for p_ctx in ctx.param():
                 k, v = self.visit(p_ctx)
                 params[k] = v
 
-            # Raiz → construir AclMessage estruturado
+            # Root → structured AclMessage
             if self._depth == 1:
                 msg = AclMessage(performative=perf_l, raw_text=self._raw_text)
 
@@ -87,53 +108,58 @@ class MessageBuilder(ACLVisitor):
                     elif lname == "reply-by":
                         msg.reply_by = to_datetime(val)
                     else:
-                        # extensões
+                        # Extensions (X-*)
                         msg.user_params[lname] = val
                 return msg
 
-            # Mensagem aninhada → devolve AclMessage “genérico” (p/ AID etc.)
+            # Nested message → return a generic AclMessage (used for AID etc.)
             return AclMessage(performative=perf_l, user_params=params)
 
         finally:
             self._depth -= 1
 
-    # ----------------------- :name value ----------------------------------- #
+    # ----------------------- :name value ------------------------------------ #
     def visitACLparam(self, ctx: ACLParser.ACLparamContext) -> Tuple[str, Any]:
+        """Return ``(name, value)`` for a slot; leniency for unknown root slots."""
         name = ctx.SYMBOL().getText()
         if self._depth == 1:
             lname = name.lower()
             if lname not in ALLOWED_ROOT and not lname.startswith("x-"):
-                # aceitaremos silenciosamente para robustez?
-                # raise ValueError(...)  # se quiseres estrito
+                # silently accept for robustness (could raise if strict)
                 pass
         value = self.visit(ctx.value())
         return name, value
 
-    # ----------------------- valores --------------------------------------- #
+    # ----------------------- values ----------------------------------------- #
     def visitAtom(self, ctx: ACLParser.AtomContext):
+        """Symbol atom → plain string."""
         return ctx.SYMBOL().getText()
 
     def visitString(self, ctx: ACLParser.StringContext):
-        raw = ctx.STRING().getText()  # inclui aspas
+        """STRING token → QuotedStr (keeps original quoting intent)."""
+        raw = ctx.STRING().getText()  # includes quotes
         return QuotedStr(bytes(raw[1:-1], "utf-8").decode("unicode_escape"))
 
     def visitNestedMessage(self, ctx: ACLParser.NestedMessageContext):
+        """Nested ACL message → visit recursively."""
         return self.visit(ctx.message())
 
     def visitListValue(self, ctx: ACLParser.ListValueContext):
+        """List of values → Python list."""
         return [self.visit(v) for v in ctx.value()]
 
 
 # --------------------------------------------------------------------------- #
-#  Helpers locais
+# Local helpers
 # --------------------------------------------------------------------------- #
 def _coerce_content(val: Any):
     """
-    Converte o valor do slot :content num formato amigável:
-    - QuotedStr -> str
-    - AclMessage -> manter objeto (util para AIDs/ações)
-    - lista -> string join
-    - atom -> string
+    Convert the :content slot to a friendlier form:
+
+    - QuotedStr → str
+    - AclMessage → keep object (useful for AIDs/actions)
+    - list      → list stays list (upstream code may stringify)
+    - atom      → str
     """
     if isinstance(val, QuotedStr):
         return str(val)

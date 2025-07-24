@@ -1,35 +1,79 @@
+# MIT License
+# Copyright (c) 2025 Santiago Bossa
+# See LICENSE file in the project root for full license text.
+
 # src/peak_acl/serialize.py
+"""
+Serialize :class:`AclMessage` instances to JADE/FIPA-ACL compliant strings.
+
+Key points:
+* Builds the ``(PERFORMATIVE ... :slot value ...)`` syntax expected by JADE.
+* Handles nested SL0 objects and even nested ``AclMessage`` instances.
+* Includes a critical DF/JADE patch to wrap SL content with extra parentheses
+  when needed (see comment in ``dumps()``).
+
+Public API
+----------
+- :func:`dumps`
+"""
+
 from __future__ import annotations
 
 from typing import Any
 
 from .message.acl import AclMessage
 from .message.aid import AgentIdentifier
-from . import sl0  # importa módulo inteiro para evitar ciclos
+from . import sl0  # import whole module to avoid circular imports
 
 
+# --------------------------------------------------------------------------- #
+# Helpers
+# --------------------------------------------------------------------------- #
 def _aid_to_fipa(aid: AgentIdentifier) -> str:
+    """Return an ``agent-identifier`` SL string for *aid*.
+
+    Example
+    -------
+    ``(agent-identifier :name bob :addresses (sequence http://...))``
+    """
     addrs = " ".join(aid.addresses) if aid.addresses else ""
     seq = f"(sequence {addrs})" if addrs else "(sequence)"
     return f"(agent-identifier :name {aid.name} :addresses {seq})"
 
 
 def _content_to_str(c: Any) -> str:
+    """Serialize ``content`` slot to a plain SL-compatible string.
+
+    Supports:
+    * SL0 AST objects (Action, Register, Done, etc.) via ``sl0.dumps``.
+    * Nested :class:`AclMessage` via recursive ``dumps()``.
+    * Raw strings (unquoted unless already quoted).
+    * Fallback to ``str(c)`` for everything else.
+    """
     if isinstance(
         c,
         (
-            sl0.Action, sl0.Register, sl0.Deregister, sl0.Modify,
-            sl0.Search, sl0.Done, sl0.Failure,
-            sl0.DfAgentDescription, sl0.ServiceDescription,
+            sl0.Action,
+            sl0.Register,
+            sl0.Deregister,
+            sl0.Modify,
+            sl0.Search,
+            sl0.Done,
+            sl0.Failure,
+            sl0.DfAgentDescription,
+            sl0.ServiceDescription,
         ),
     ):
         return sl0.dumps(c)
 
-    from .message.acl import AclMessage  # local import para evitar ciclo
+    # Local import to avoid cycle at module import time
+    from .message.acl import AclMessage  # noqa: WPS433 (local import by design)
+
     if isinstance(c, AclMessage):
         return dumps(c)
 
     if isinstance(c, str):
+        # If already quoted, strip quotes so we'll re-escape later
         if len(c) >= 2 and c[0] == '"' and c[-1] == '"':
             return c[1:-1]
         return c
@@ -37,7 +81,30 @@ def _content_to_str(c: Any) -> str:
     return str(c)
 
 
+# --------------------------------------------------------------------------- #
+# Public serializer
+# --------------------------------------------------------------------------- #
 def dumps(msg: AclMessage) -> str:
+    """Serialize an :class:`AclMessage` into a FIPA-ACL string.
+
+    Parameters
+    ----------
+    msg :
+        Message instance to serialize.
+
+    Returns
+    -------
+    str
+        JADE/FIPA-ACL compliant textual representation.
+
+    Notes
+    -----
+    * **CRITICAL PATCH for DF/JADE**: if ``language`` starts with ``"fipa-sl"``,
+      ensure the content is wrapped in an extra pair of parentheses unless it
+      already starts with ``"(("``. This mirrors JADE's expectations.
+    * ``user_params`` are appended verbatim; make sure values are already
+      properly serialized/escaped.
+    """
     p = msg.performative_upper
     parts = [f"({p}"]
 

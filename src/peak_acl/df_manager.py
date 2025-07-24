@@ -1,4 +1,25 @@
+# MIT License
+# Copyright (c) 2025 Santiago Bossa
+# See LICENSE file in the project root for full license text.
+
 # src/peak_acl/df_manager.py
+"""
+Helpers to interact with a FIPA Directory Facilitator (DF).
+
+Public API
+----------
+- :func:`register`
+- :func:`deregister`
+- :func:`search_services`
+- :func:`decode_df_reply`
+- :func:`is_df_done_msg`
+- :func:`is_df_failure_msg`
+- :func:`extract_search_results`
+
+The module builds SL0/FIPA-AM compliant payloads, sends them via an
+:class:`HttpMtpClient`, and provides utilities to decode DF replies.
+"""
+
 from __future__ import annotations
 
 from typing import Iterable, Optional, Sequence, Tuple, Union, List
@@ -10,8 +31,12 @@ from .content import decode_content
 from . import sl0, fipa_am
 
 __all__ = [
-    "register", "deregister", "search_services",
-    "decode_df_reply", "is_df_done_msg", "is_df_failure_msg",
+    "register",
+    "deregister",
+    "search_services",
+    "decode_df_reply",
+    "is_df_done_msg",
+    "is_df_failure_msg",
     "extract_search_results",
 ]
 
@@ -20,6 +45,7 @@ __all__ = [
 # util
 # ------------------------------------------------------------------ #
 def _first_url(ai: AgentIdentifier) -> str:
+    """Return the first HTTP URL from an AID or raise if none exists."""
     if not ai.addresses:
         raise ValueError(f"AID sem endereço HTTP: {ai}")
     return ai.addresses[0]
@@ -28,6 +54,7 @@ def _first_url(ai: AgentIdentifier) -> str:
 def _coerce_services(
     raw: Iterable[Union[Tuple[str, str], fipa_am.ServiceDescription]],
 ) -> list[fipa_am.ServiceDescription]:
+    """Normalize tuples or ServiceDescription objects into a list."""
     out: list[fipa_am.ServiceDescription] = []
     for item in raw:
         if isinstance(item, fipa_am.ServiceDescription):
@@ -51,8 +78,13 @@ async def register(
     protocols: Sequence[str] = (),
     ownership: Sequence[str] = (),
     http_client: HttpMtpClient,
-    df_url: Optional[str] = None,   # <<< retro-compatível; ignorado se None
+    df_url: Optional[str] = None,  # <<< retro-compatível; ignorado se None
 ) -> AclMessage:
+    """Send a DF REGISTER request and return the request message.
+
+    Parameters mirror FIPA-AM fields; tuples ``(name, type)`` are coerced into
+    :class:`ServiceDescription` objects.
+    """
     svc_objs = _coerce_services(services)
     ad = fipa_am.build_agent_description(
         aid=my_aid,
@@ -83,6 +115,7 @@ async def deregister(
     http_client: HttpMtpClient,
     df_url: Optional[str] = None,
 ) -> AclMessage:
+    """Send a DF DEREGISTER request and return the request message."""
     inner = sl0.Action(
         actor=df_aid,
         act=sl0.Deregister(sl0.DfAgentDescription(name=my_aid)),
@@ -111,13 +144,13 @@ async def search_services(
     df_url: Optional[str] = None,
 ) -> AclMessage:
     """
-    Envia REQUEST search ao DF.
+    Send a DF SEARCH request.
 
-    JADE exige sempre o slot :constraints, por isso incluímos
-    (search-constraints :max-results X) — se max_results for None,
-    usamos -1 (ilimitado).
+    JADE always requires the ``:constraints`` slot, so we include
+    ``(search-constraints :max-results X)``. If ``max_results`` is ``None``,
+    use ``-1`` (unlimited).
     """
-    # constrói parte services (template)
+    # build services (template)
     svc_bits = []
     if service_name is not None:
         svc_bits.append(f":name {service_name}")
@@ -155,13 +188,16 @@ async def search_services(
 # ------------------------------------------------------------------ #
 def decode_df_reply(msg: AclMessage):
     """
-    Converte msg.content -> AST SL0; lida com ContentElementList.
-    Retorna:
-        sl0.Done | sl0.Failure | list[AgentDescription] | payload bruto
+    Convert ``msg.content`` into SL0 AST/data, unwrapping ContentElementList.
+
+    Returns
+    -------
+    sl0.Done | sl0.Failure | list[AgentDescription] | Any
+        Parsed object(s) or the raw payload if decoding fails.
     """
     payload = decode_content(msg)
 
-    # Desembrulha ContentElementList [(...)] → (...)
+    # Unwrap ContentElementList [(...)] → (...)
     while isinstance(payload, list) and len(payload) == 1:
         payload = payload[0]
 
@@ -177,9 +213,8 @@ def decode_df_reply(msg: AclMessage):
     if isinstance(payload, sl0.Result):
         return extract_search_results_from_value(payload.value) or payload
 
-    # Alguns DFs podem devolver diretamente lista de df-agent-description
+    # Some DFs may return a plain list of df-agent-description
     if isinstance(payload, list):
-        # tenta mapear tudo para AgentDescription
         ads = []
         for it in payload:
             if isinstance(it, sl0.DfAgentDescription):
@@ -191,21 +226,20 @@ def decode_df_reply(msg: AclMessage):
     return payload
 
 
-
 def is_df_done_msg(msg: AclMessage) -> bool:
+    """Return True if the DF reply decodes to an ``sl0.Done``."""
     from . import sl0 as _sl0
     return isinstance(decode_df_reply(msg), _sl0.Done)
 
 
 def is_df_failure_msg(msg: AclMessage) -> bool:
+    """Return True if the DF reply decodes to an ``sl0.Failure``."""
     from . import sl0 as _sl0
     return isinstance(decode_df_reply(msg), _sl0.Failure)
 
 
 def extract_search_results(msg: AclMessage) -> List[fipa_am.AgentDescription]:
-    """
-    Se a mensagem for resultado de search, devolve lista de AgentDescription.
-    """
+    """If ``msg`` is a DF search result, return a list of AgentDescription."""
     payload = decode_content(msg)
     if isinstance(payload, sl0.Result):
         ads = extract_search_results_from_value(payload.value)
@@ -213,9 +247,16 @@ def extract_search_results(msg: AclMessage) -> List[fipa_am.AgentDescription]:
     return []
 
 
-def extract_search_results_from_value(val) -> Optional[List[fipa_am.AgentDescription]]:
+def extract_search_results_from_value(
+    val,
+) -> Optional[List[fipa_am.AgentDescription]]:
     """
-    Recebe payload.value dum Result SL0; tenta extrair lista de ADs.
+    Receive ``payload.value`` from an SL0 Result and try to extract ADs.
+
+    Handles:
+    * A single ``DfAgentDescription``
+    * Lists like ``['set', dfad, ...]`` or plain lists
+    * Raw parsed lists where we rebuild AST nodes
     """
     from . import sl0 as _sl0
 
@@ -225,15 +266,17 @@ def extract_search_results_from_value(val) -> Optional[List[fipa_am.AgentDescrip
         ads.append(fipa_am.from_sl0(val))  # type: ignore[arg-type]
         return ads
 
-    # val pode ser ['set', dfad,...] ou lista pura; ou AST parseado (lista python)
+    # val may be ['set', dfad, ...] or a pure list or parsed AST list
     if isinstance(val, list):
-        items = val[1:] if val and isinstance(val[0], str) and val[0].lower() == "set" else val
+        items = (
+            val[1:] if val and isinstance(val[0], str) and val[0].lower() == "set" else val
+        )
         for it in items:
-            # se já é DfAgentDescription
+            # already a DfAgentDescription?
             if isinstance(it, _sl0.DfAgentDescription):
                 ads.append(fipa_am.from_sl0(it))  # type: ignore[arg-type]
             else:
-                # tenta reconstruir AST e converter
+                # try to rebuild AST and convert
                 try:
                     obj = _sl0._build_ast(it)  # pyright: ignore [reportPrivateUsage]
                     if isinstance(obj, _sl0.DfAgentDescription):

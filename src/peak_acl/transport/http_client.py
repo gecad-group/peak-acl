@@ -1,11 +1,19 @@
-"""
-http_client.py
-──────────────
-Cliente assíncrono FIPA HTTP-MTP.
+# MIT License
+# Copyright (c) 2025 Santiago Bossa
+# See LICENSE file in the project root for full license text.
 
-• Empacota Envelope + ACL em multipart/mixed
-• POST ao ACC remoto com retries e back-off exponencial
-• Gere e reutiliza um aiohttp.ClientSession (boa prática)
+"""
+Asynchronous FIPA HTTP-MTP client.
+
+This client packages an ACL message + transport envelope into a
+``multipart/mixed`` body and POSTs it to a remote ACC (Agent Communication
+Channel). It implements exponential backoff with jitter and reuses a single
+``aiohttp.ClientSession`` for efficiency.
+
+Public API
+----------
+- :class:`HttpMtpClient`
+- :class:`HttpMtpError`
 """
 
 from __future__ import annotations
@@ -27,11 +35,45 @@ __all__ = ["HttpMtpClient", "HttpMtpError"]
 _LOG = logging.getLogger("peak_acl.http_mtp_client")
 
 
+# --------------------------------------------------------------------------- #
+# Errors
+# --------------------------------------------------------------------------- #
 class HttpMtpError(RuntimeError):
-    """Falha definitiva ao enviar a mensagem para o ACC."""
+    """Definitive failure while sending a message to the ACC."""
 
 
+# --------------------------------------------------------------------------- #
+# HttpMtpClient
+# --------------------------------------------------------------------------- #
 class HttpMtpClient:
+    """HTTP-MTP sender with retry/backoff support.
+
+    Parameters
+    ----------
+    retries :
+        Maximum number of attempts before giving up (default: 3).
+    backoff_base :
+        Initial backoff delay in seconds (default: 0.8).
+    backoff_cap :
+        Maximum backoff delay in seconds (default: 4.0).
+    timeout :
+        Per-request total timeout passed to ``aiohttp.ClientSession`` (seconds).
+    session :
+        Optional externally managed ``aiohttp.ClientSession``. If omitted, this
+        class creates and owns one (and will close it on ``close()``).
+
+    Notes
+    -----
+    * Jitter (±30%) is applied to each backoff delay to avoid thundering herds.
+    * Use as an async context manager to ensure the internal session is closed:
+
+      .. code-block:: python
+
+         async with HttpMtpClient() as client:
+             await client.send(...)
+
+    """
+
     def __init__(
         self,
         *,
@@ -41,15 +83,6 @@ class HttpMtpClient:
         timeout: float = 10.0,
         session: Optional[aiohttp.ClientSession] = None,
     ):
-        """
-        Parameters
-        ----------
-        retries          número de tentativas antes de falhar
-        backoff_base     segundos iniciais para back-off exponencial
-        backoff_cap      valor máximo de back-off (segundos)
-        timeout          timeout de cada pedido (segundos)
-        session          opcional: fornece uma ClientSession externa
-        """
         self.retries = retries
         self.backoff_base = backoff_base
         self.backoff_cap = backoff_cap
@@ -58,6 +91,7 @@ class HttpMtpClient:
             timeout=ClientTimeout(total=timeout)
         )
 
+    # ------------------------------------------------------------------ #
     async def send(
         self,
         to_ai: AgentIdentifier,
@@ -65,7 +99,24 @@ class HttpMtpClient:
         acl_msg: AclMessage,
         acc_url: str,
     ) -> None:
+        """Send a single ACL message to the ACC via HTTP POST.
 
+        Parameters
+        ----------
+        to_ai :
+            Recipient agent identifier (envelope ``to``).
+        from_ai :
+            Sender agent identifier (envelope ``from``).
+        acl_msg :
+            ACL message to serialize and include as payload.
+        acc_url :
+            ACC endpoint URL (HTTP-MTP).
+
+        Raises
+        ------
+        HttpMtpError
+            If all retry attempts fail or a non-200 HTTP status is returned.
+        """
         body, ctype = build_multipart(to_ai, from_ai, acl_msg)
         headers = {
             "Content-Type": ctype,
@@ -79,31 +130,39 @@ class HttpMtpClient:
             try:
                 async with self.session.post(acc_url, data=body, headers=headers) as resp:
                     if resp.status == 200:
-                        _LOG.info("Enviado para %s (status 200)", acc_url)
+                        _LOG.info("Sent to %s (status 200)", acc_url)
                         return
-                    raise HttpMtpError(f"ACC devolveu {resp.status}")
+                    raise HttpMtpError(f"ACC returned {resp.status}")
             except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
                 attempt += 1
                 if attempt > self.retries:
                     raise HttpMtpError(
-                        f"Falhou após {self.retries} tentativas: {exc}"
+                        f"Failed after {self.retries} attempts: {exc}"
                     ) from exc
 
                 jitter = random.uniform(0, 0.3 * delay)
-                _LOG.warning("Tentativa %d falhou (%s); retry em %.1fs",
-                             attempt, exc, delay + jitter)
+                _LOG.warning(
+                    "Attempt %d failed (%s); retrying in %.1fs",
+                    attempt,
+                    exc,
+                    delay + jitter,
+                )
                 await asyncio.sleep(delay + jitter)
                 delay = min(delay * 2, self.backoff_cap)
 
-    # ------------------------------------------------------------------
-    async def close(self):
-        """Fecha a ClientSession se foi criada internamente."""
+    # ------------------------------------------------------------------ #
+    async def close(self) -> None:
+        """Close the owned ``ClientSession`` if it was created internally."""
         if self._owns_session and not self.session.closed:
             await self.session.close()
 
-    # Context-manager assíncrono
+    # ------------------------------------------------------------------ #
+    # Async context manager helpers
+    # ------------------------------------------------------------------ #
     async def __aenter__(self):
+        """Return self to support ``async with`` usage."""
         return self
 
     async def __aexit__(self, *exc):
+        """Ensure ``close()`` is called when leaving the async context."""
         await self.close()

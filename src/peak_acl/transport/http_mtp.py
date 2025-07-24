@@ -1,10 +1,13 @@
+# MIT License
+# Copyright (c) 2025 Santiago Bossa
+# See LICENSE file in the project root for full license text.
+
+# src/peak_acl/transport/http_mtp.py
 """
-peak_acl.transport.http_mtp
-===========================
+Inbound HTTP-MTP server compatible with JADE.
 
-Servidor HTTP-MTP *inbound* compatível com JADE.
-
-O JADE envia `multipart/mixed` minimalista, sem Content-Disposition:
+JADE posts a very minimal ``multipart/mixed`` body (no Content-Disposition).
+Typical shape:
 
     --BOUNDARY
     Content-Type: application/xml
@@ -16,22 +19,22 @@ O JADE envia `multipart/mixed` minimalista, sem Content-Disposition:
     (ACL ...)
     --BOUNDARY--
 
-Alguns agentes podem trocar a ordem ou inserir CR/LF extra. A versão
-anterior dependia do parser multipart do aiohttp e de `part.name`,
-falhando com tráfego JADE e levando os Deliverer threads do JADE a
-bloquearem (avisos “Deliverer stuck”).
+Some agents reorder parts or add extra CR/LF breaks. The previous implementation
+relied on ``aiohttp``'s multipart parser and ``part.name`` and would fail with
+JADE traffic, causing JADE's Deliverer threads to block (“Deliverer stuck”).
 
-Esta implementação:
-  • Lê o corpo bruto (`await request.read()`).
-  • Extrai boundary via regex.
-  • Faz parsing manual tolerante a variações.
-  • Identifica envelope/ACL por Content-Type + heurísticas.
-  • Responde **imediatamente** 200 ao JADE; parsing em background.
-  • Em erro, loga excerto e descarta (sem bloquear JADE).
-  • Entrega (Envelope, AclMessage) a callback `on_message`, ou a `inbox`.
+This implementation:
 
-Disponibiliza helper `start_server()` usado pelo runtime.
+* Reads the raw body (``await request.read()``).
+* Extracts the boundary via regex.
+* Parses multipart manually, tolerating variations.
+* Identifies envelope/ACL by Content-Type + heuristics.
+* Replies **immediately** with HTTP 200 to JADE; parsing happens in background.
+* On error, logs a snippet and discards (does not block JADE).
+* Delivers ``(Envelope, AclMessage)`` to a callback ``on_message`` or to
+  an internal ``inbox`` queue.
 
+A helper :func:`start_server` is provided for runtime integration.
 """
 
 from __future__ import annotations
@@ -65,18 +68,30 @@ _BOUNDARY_RE = re.compile(r'boundary="?([^";]+)"?', re.IGNORECASE)
 # Multipart helpers
 # --------------------------------------------------------------------------- #
 def _split_parts(raw: bytes, boundary_bytes: bytes) -> list[Tuple[bytes, bytes]]:
-    """
-    Divide corpo bruto em lista de partes [(headers, body)].
+    """Split raw multipart payload into ``[(headers, body)]`` pairs.
 
-    Não tenta interpretar Content-Transfer-Encoding. Apenas separa.
+    This is a tolerant splitter: it only separates parts and does not interpret
+    ``Content-Transfer-Encoding`` or other headers.
+
+    Parameters
+    ----------
+    raw :
+        Full HTTP request body (bytes).
+    boundary_bytes :
+        Boundary marker extracted from the Content-Type header.
+
+    Returns
+    -------
+    list[tuple[bytes, bytes]]
+        Sequence of ``(headers, body)`` byte chunks (headers are raw).
     """
     marker = b"--" + boundary_bytes
-    end_marker = marker + b"--"
+    end_marker = marker + b"--"  # not explicitly used; kept for clarity
 
-    # Normaliza: retira whitespace lateral (CR/LF extra)
+    # Normalize: trim surrounding whitespace / extra CRLF
     data = raw.strip()
 
-    # Divide por cada ocorrência do marcador (inclusive final)
+    # Split by each marker occurrence (final marker included)
     chunks = data.split(marker)
 
     parts: list[Tuple[bytes, bytes]] = []
@@ -84,11 +99,10 @@ def _split_parts(raw: bytes, boundary_bytes: bytes) -> list[Tuple[bytes, bytes]]
         c = chunk.strip()
         if not c or c == b"--":
             continue
-        if c.startswith(b"--"):  # parte final (--BOUNDARY--)
+        if c.startswith(b"--"):  # final part marker (--BOUNDARY--)
             c = c[2:].lstrip()
 
-        # separa cabeçalhos / corpo
-        # prioridade CRLF; fallback LF
+        # Separate headers/body: prefer CRLF, fallback LF
         if b"\r\n\r\n" in c:
             hdr, body = c.split(b"\r\n\r\n", 1)
         elif b"\n\n" in c:
@@ -96,7 +110,7 @@ def _split_parts(raw: bytes, boundary_bytes: bytes) -> list[Tuple[bytes, bytes]]
         else:
             hdr, body = b"", c
 
-        # corta CR/LF finais (antes do próximo boundary)
+        # Trim trailing CR/LF before next boundary
         body = body.rstrip(b"\r\n")
         parts.append((hdr, body))
 
@@ -104,17 +118,37 @@ def _split_parts(raw: bytes, boundary_bytes: bytes) -> list[Tuple[bytes, bytes]]
 
 
 def _guess_is_envelope(body: bytes) -> bool:
+    """Heuristic: envelope starts with XML declaration."""
     return body.lstrip().startswith(b"<?xml")
 
 
 def _guess_is_acl(body: bytes) -> bool:
-    # ACL strings JADE começam com '(' (ignorar whitespace)
+    """Heuristic: JADE ACL strings start with '(' (ignore leading whitespace)."""
     return body.lstrip().startswith(b"(")
 
 
 def _extract_envelope_acl(raw: bytes, boundary_bytes: bytes) -> Tuple[str, str]:
-    """
-    Extrai (envelope_xml, acl_str). Levanta ValueError se falhar.
+    """Extract ``(envelope_xml, acl_str)`` from a raw multipart body.
+
+    Uses headers first, then heuristics, then positional fallback. Raises a
+    ``ValueError`` if fewer than 2 parts are found.
+
+    Parameters
+    ----------
+    raw :
+        Full request body.
+    boundary_bytes :
+        Boundary marker used to split parts.
+
+    Returns
+    -------
+    tuple[str, str]
+        Decoded (UTF-8) envelope XML text and ACL string.
+
+    Raises
+    ------
+    ValueError
+        If fewer than two parts are present.
     """
     parts = _split_parts(raw, boundary_bytes)
     if len(parts) < 2:
@@ -123,7 +157,7 @@ def _extract_envelope_acl(raw: bytes, boundary_bytes: bytes) -> Tuple[str, str]:
     env_bytes: Optional[bytes] = None
     acl_bytes: Optional[bytes] = None
 
-    # 1) Usa Content-Type se presente
+    # 1) Prefer Content-Type if present
     for hdr, body in parts:
         hlow = hdr.lower()
         if (b"application/xml" in hlow) and (env_bytes is None):
@@ -133,7 +167,7 @@ def _extract_envelope_acl(raw: bytes, boundary_bytes: bytes) -> Tuple[str, str]:
             acl_bytes = body
             continue
 
-    # 2) Heurísticas
+    # 2) Heuristics
     for _, body in parts:
         if env_bytes is None and _guess_is_envelope(body):
             env_bytes = body
@@ -142,39 +176,61 @@ def _extract_envelope_acl(raw: bytes, boundary_bytes: bytes) -> Tuple[str, str]:
             acl_bytes = body
             continue
 
-    # 3) Último recurso: assume 1ª parte envelope, 2ª ACL
+    # 3) Fallback: assume 1st part = envelope, 2nd = ACL
     if env_bytes is None:
         env_bytes = parts[0][1]
     if acl_bytes is None:
-        # toma a última parte não envelope
+        # take the last non-envelope part
         for _, body in reversed(parts):
-            if body is not env_bytes:
+            if body is not env_bytes:  # identity check intentional
                 acl_bytes = body
                 break
         else:
             acl_bytes = parts[-1][1]
 
-    # Decodifica
+    # Decode to text
     env_txt = env_bytes.decode("utf-8", errors="replace").strip()
     acl_txt = acl_bytes.decode("utf-8", errors="replace").strip()
 
-    # Sanidade: se ACL claramente não começa por '(' mas envelope sim, troca
-    if not _guess_is_acl(acl_bytes) and _guess_is_envelope(acl_bytes) and _guess_is_acl(env_bytes):
+    # Sanity swap: if ACL/envelope seem inverted
+    if (
+        not _guess_is_acl(acl_bytes)
+        and _guess_is_envelope(acl_bytes)
+        and _guess_is_acl(env_bytes)
+    ):
         env_txt, acl_txt = acl_txt, env_txt
 
     return env_txt, acl_txt
 
 
 # --------------------------------------------------------------------------- #
-# Classe principal
+# Main server class
 # --------------------------------------------------------------------------- #
 class HttpMtpServer:
-    """
-    Servidor HTTP-MTP (INBOUND).
+    """Inbound HTTP-MTP server.
 
-    on_message:
-        Callback opcional (`env`, `acl`) chamado por mensagem válida.
-        Se None, mensagens vão para `self.inbox`.
+    Parameters
+    ----------
+    on_message :
+        Optional async callback ``(env: Envelope, acl: AclMessage) -> Awaitable[None]``.
+        If ``None``, messages are queued into :pyattr:`inbox`.
+    client_max_size :
+        Max accepted request size in bytes (default: 5 MiB).
+    loop :
+        Optional event loop to bind to ``aiohttp`` app (deprecated in aiohttp>=3.8).
+
+    Attributes
+    ----------
+    inbox :
+        ``asyncio.Queue[(Envelope, AclMessage)]`` used when no callback is set.
+    app :
+        Underlying ``aiohttp.web.Application`` instance.
+
+    Notes
+    -----
+    * The server answers 200 OK immediately, then parses in a background task to
+      avoid blocking JADE deliverers.
+    * Errors during parsing are logged and ignored (message is dropped).
     """
 
     def __init__(
@@ -192,12 +248,10 @@ class HttpMtpServer:
             loop=loop,
         )
 
-        # middlewares
-        self.app.middlewares.extend(
-            [self._logging_middleware, self._error_middleware]
-        )
+        # Middlewares
+        self.app.middlewares.extend([self._logging_middleware, self._error_middleware])
 
-        # rota /acc
+        # /acc route
         self.app.router.add_post(ACC_ENDPOINT, self._handle_post)
 
     # ------------------------------------------------------------------ #
@@ -205,6 +259,7 @@ class HttpMtpServer:
     # ------------------------------------------------------------------ #
     @web.middleware
     async def _logging_middleware(self, request: web.Request, handler):
+        """Log method/path/remote/status for each request."""
         resp = await handler(request)
         _LOG.info(
             "%s %s ← %s → %s",
@@ -217,6 +272,7 @@ class HttpMtpServer:
 
     @web.middleware
     async def _error_middleware(self, request: web.Request, handler):
+        """Convert unexpected exceptions to HTTP 400 and log the traceback."""
         try:
             return await handler(request)
         except web.HTTPException:
@@ -229,9 +285,10 @@ class HttpMtpServer:
     # /acc handler
     # ------------------------------------------------------------------ #
     async def _handle_post(self, request: web.Request) -> web.StreamResponse:
+        """Handle incoming POSTs to the ACC endpoint (non-blocking)."""
         raw = await request.read()
 
-        # resposta imediata (não bloquear JADE)
+        # Immediate response (do not block JADE)
         resp = web.Response(
             text="ok",
             status=200,
@@ -247,22 +304,26 @@ class HttpMtpServer:
 
         boundary_bytes = m.group(1).encode("utf-8", "ignore")
 
-        # processa em background
+        # Process in background
         asyncio.create_task(self._process_raw(raw, boundary_bytes))
         return resp
 
     # ------------------------------------------------------------------ #
     async def _process_raw(self, raw: bytes, boundary_bytes: bytes) -> None:
-        """
-        Parse raw multipart -> Envelope + AclMessage; entrega.
-        Executa em Task separada.
+        """Parse raw multipart into Envelope + AclMessage and deliver it.
+
+        Runs in a separate Task.
         """
         try:
             env_txt, acl_txt = _extract_envelope_acl(raw, boundary_bytes)
 
-            # debug
-            _LOG.debug("MTP RAW (%dB) env=%dB acl=%dB",
-                       len(raw), len(env_txt), len(acl_txt))
+            # Debug snippets
+            _LOG.debug(
+                "MTP RAW (%dB) env=%dB acl=%dB",
+                len(raw),
+                len(env_txt),
+                len(acl_txt),
+            )
             _LOG.debug("MTP ENV snippet: %s", env_txt[:80].replace("\n", " "))
             _LOG.debug("MTP ACL snippet: %s", acl_txt[:80].replace("\n", " "))
 
@@ -270,12 +331,14 @@ class HttpMtpServer:
             acl = parse_acl(acl_txt)
 
         except Exception:
-            # Mostra excerto do corpo para diagnóstico
+            # Show a sample of the body for diagnostics
             sample = raw[:200].decode("utf-8", errors="replace").replace("\n", "\\n")
-            _LOG.exception("Falha a processar HTTP-MTP (descartado). Raw[:200]=%r", sample)
+            _LOG.exception(
+                "Falha a processar HTTP-MTP (descartado). Raw[:200]=%r", sample
+            )
             return
 
-        # entrega
+        # Deliver
         try:
             if self._on_message is not None:
                 await self._on_message(env, acl)
@@ -287,24 +350,22 @@ class HttpMtpServer:
                 getattr(acl, "performative_upper", "?"),
                 len(raw),
             )
-        except Exception:  # pragma: no cover - callback externo
+        except Exception:  # pragma: no cover - external callback
             _LOG.exception("Erro no callback on_message (ignorado).")
 
     # ------------------------------------------------------------------ #
     async def run(self, host: str = "0.0.0.0", port: int = 7777):
-        """
-        Arranque *blocking* (debug manual).
-        """
+        """Blocking run helper (manual debug usage)."""
         runner = web.AppRunner(self.app)
         await runner.setup()
         site = web.TCPSite(runner, host, port)
         _LOG.info("HttpMtpServer a escutar em http://%s:%d%s", host, port, ACC_ENDPOINT)
         await site.start()
-        await asyncio.Event().wait()  # bloqueia
+        await asyncio.Event().wait()  # block forever
 
 
 # --------------------------------------------------------------------------- #
-# start_server helper (usado pelo runtime)
+# start_server helper (used by runtime)
 # --------------------------------------------------------------------------- #
 async def start_server(
     *,
@@ -314,6 +375,11 @@ async def start_server(
     loop: Optional[asyncio.AbstractEventLoop] = None,
     client_max_size: int = MAX_REQUEST_SIZE,
 ) -> tuple[HttpMtpServer, web.AppRunner, web.TCPSite]:
+    """Convenience bootstrap for the HTTP-MTP server.
+
+    Returns the server instance plus the runner/site objects so the caller can
+    later stop/cleanup them if needed.
+    """
     server = HttpMtpServer(
         on_message=on_message,
         client_max_size=client_max_size,
@@ -323,12 +389,14 @@ async def start_server(
     await runner.setup()
     site = web.TCPSite(runner, bind_host, port)
     await site.start()
-    _LOG.info("HttpMtpServer a escutar em http://%s:%d%s", bind_host, port, ACC_ENDPOINT)
+    _LOG.info(
+        "HttpMtpServer a escutar em http://%s:%d%s", bind_host, port, ACC_ENDPOINT
+    )
     return server, runner, site
 
 
 # --------------------------------------------------------------------------- #
-# Stand‑alone debug
+# Stand-alone debug
 # --------------------------------------------------------------------------- #
 if __name__ == "__main__":  # pragma: no cover
     import argparse

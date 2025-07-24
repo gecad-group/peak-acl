@@ -1,19 +1,23 @@
+# MIT License
+# Copyright (c) 2025 Santiago Bossa
+# See LICENSE file in the project root for full license text.
+
 # src/peak_acl/sl0.py
 """
-Mini-implementação FIPA-SL0 suficiente para interagir com DF/AMS via JADE.
+Mini implementation of FIPA-SL0 sufficient to talk to DF/AMS via JADE.
 
-Suporta parse/serialize de:
+Supported forms:
     (action <aid> (register|deregister|modify <df-agent-description>))
     (action <aid> (search <df-agent-description> [<max-results>]))
-e respostas:
+Replies:
     (done <expr>)
     (failure <expr>)
     (result <expr> <value>)
 
-Também reconhece estruturas df-agent-description e service-description
-com campos opcionais (languages, ontologies, protocols, properties, ...).
+Also recognises ``df-agent-description`` and ``service-description`` structures
+with optional fields (languages, ontologies, protocols, properties, ...).
 
-Nota: usamos parsing leniente; ignoramos slots desconhecidos.
+Parsing is intentionally lenient: unknown slots are ignored.
 """
 
 from __future__ import annotations
@@ -29,17 +33,19 @@ from .message.aid import AgentIdentifier
 # ------------------------------------------------------------------ #
 @dataclass
 class ServiceDescription:
+    """SL0 service-description node."""
     name: Optional[str] = None
     type: Optional[str] = None
     languages: List[str] = field(default_factory=list)
     ontologies: List[str] = field(default_factory=list)
     protocols: List[str] = field(default_factory=list)
-    # propriedades DF arbitrárias
+    # Arbitrary DF properties (name, value)
     properties: List[Tuple[str, str]] = field(default_factory=list)
 
 
 @dataclass
 class DfAgentDescription:
+    """SL0 df-agent-description node."""
     name: Optional[AgentIdentifier] = None
     services: List[ServiceDescription] = field(default_factory=list)
     languages: List[str] = field(default_factory=list)
@@ -94,24 +100,30 @@ class Result:
 # ------------------------------------------------------------------ #
 # Public helpers
 # ------------------------------------------------------------------ #
-def build_register_content(my: AgentIdentifier,
-                           services: Sequence[Tuple[str, str]],
-                           *,
-                           df: AgentIdentifier) -> str:
+def build_register_content(
+    my: AgentIdentifier,
+    services: Sequence[Tuple[str, str]],
+    *,
+    df: AgentIdentifier,
+) -> str:
+    """Convenience builder for a REGISTER action payload (as SL0 string)."""
     sd = [ServiceDescription(name=n, type=t) for n, t in services]
     expr = Action(actor=df, act=Register(DfAgentDescription(name=my, services=sd)))
     return dumps(expr)
 
 
 def is_done(obj: Any) -> bool:
+    """Return ``True`` if *obj* is a ``Done`` node."""
     return isinstance(obj, Done)
 
 
 def is_failure(obj: Any) -> bool:
+    """Return ``True`` if *obj* is a ``Failure`` node."""
     return isinstance(obj, Failure)
 
 
 def is_result(obj: Any) -> bool:
+    """Return ``True`` if *obj* is a ``Result`` node."""
     return isinstance(obj, Result)
 
 
@@ -119,6 +131,7 @@ def is_result(obj: Any) -> bool:
 # Serializer
 # ------------------------------------------------------------------ #
 def dumps(obj: Any) -> str:
+    """Serialize an SL0 AST node to a string."""
     return _render(obj)
 
 
@@ -152,6 +165,7 @@ def _render(obj: Any) -> str:
 
 
 def _render_aid(aid: AgentIdentifier) -> str:
+    """Serialize an AgentIdentifier into SL0 agent-identifier form."""
     if aid.addresses:
         seq = " ".join(aid.addresses)
         return f"(agent-identifier :name {aid.name} :addresses (sequence {seq}))"
@@ -159,6 +173,7 @@ def _render_aid(aid: AgentIdentifier) -> str:
 
 
 def _render_sd(sd: ServiceDescription) -> str:
+    """Serialize :class:`ServiceDescription` to SL0."""
     parts = ["(service-description"]
     if sd.name is not None:
         parts.append(f" :name {sd.name}")
@@ -171,15 +186,14 @@ def _render_sd(sd: ServiceDescription) -> str:
     if sd.protocols:
         parts.append(" :protocols (set " + " ".join(sd.protocols) + ")")
     if sd.properties:
-        props = " ".join(
-            f"(property :name {n} :value {v})" for (n, v) in sd.properties
-        )
+        props = " ".join(f"(property :name {n} :value {v})" for (n, v) in sd.properties)
         parts.append(f" :properties (set {props})")
     parts.append(")")
     return "".join(parts)
 
 
 def _render_dfad(dfad: DfAgentDescription) -> str:
+    """Serialize :class:`DfAgentDescription` to SL0."""
     parts = ["(df-agent-description"]
     if dfad.name is not None:
         parts.append(" :name " + _render_aid(dfad.name))
@@ -204,6 +218,7 @@ def _render_dfad(dfad: DfAgentDescription) -> str:
 # Parser string → AST
 # ------------------------------------------------------------------ #
 def loads(src: str) -> Any:
+    """Parse an SL0 string into the corresponding AST objects."""
     toks = list(_tokenize(src))
     expr, pos = _parse_expr(toks, 0)
     if pos != len(toks):
@@ -213,32 +228,43 @@ def loads(src: str) -> Any:
 
 # --- tokenizer -------------------------------------------------------------
 def _tokenize(s: str) -> Iterator[str]:
+    """Yield tokens from an SL0 string (very simple lexer)."""
     i, n = 0, len(s)
     while i < n:
         c = s[i]
         if c.isspace():
-            i += 1; continue
+            i += 1
+            continue
         if c in "()":
-            yield c; i += 1; continue
+            yield c
+            i += 1
+            continue
         if c == '"':
-            i += 1; buf = []
+            i += 1
+            buf = []
             while i < n:
                 c = s[i]
-                if c == '\\' and i + 1 < n:
-                    buf.append(s[i + 1]); i += 2; continue
+                if c == "\\" and i + 1 < n:
+                    buf.append(s[i + 1])
+                    i += 2
+                    continue
                 if c == '"':
-                    i += 1; break
-                buf.append(c); i += 1
+                    i += 1
+                    break
+                buf.append(c)
+                i += 1
             yield '"' + "".join(buf) + '"'
             continue
         j = i
         while j < n and not s[j].isspace() and s[j] not in "()":
             j += 1
-        yield s[i:j]; i = j
+        yield s[i:j]
+        i = j
 
 
 # --- recursive descent to nested Python lists ------------------------------
 def _parse_expr(toks: List[str], pos: int):
+    """Recursive-descent parse to nested Python lists (S-expression style)."""
     if pos >= len(toks):
         raise ValueError("Fim inesperado.")
     t = toks[pos]
@@ -261,6 +287,7 @@ def _parse_expr(toks: List[str], pos: int):
 
 # --- AST builder -----------------------------------------------------------
 def _build_ast(e: Any) -> Any:
+    """Transform the nested Python list into our SL0 dataclasses."""
     if not isinstance(e, list) or not e:
         return e
     head = str(e[0]).lower()
@@ -283,8 +310,10 @@ def _build_ast(e: Any) -> Any:
         templ = _build_dfad(e[1])
         maxres = None
         if len(e) >= 3:
-            try: maxres = int(e[2])
-            except Exception: pass
+            try:
+                maxres = int(e[2])
+            except Exception:
+                pass
         return Search(template=templ, max_results=maxres)
 
     if head == "done" and len(e) >= 2:
@@ -305,14 +334,16 @@ def _build_ast(e: Any) -> Any:
     if head == "agent-identifier":
         return _build_aid(e)
 
-    # fallback genérico
+    # Generic fallback
     return [_build_ast(x) for x in e]
 
 
 def _build_aid(e: Any) -> AgentIdentifier:
+    """Build an :class:`AgentIdentifier` from a parsed list."""
     if not isinstance(e, list):
         return AgentIdentifier(str(e), [])
-    name = None; addrs: List[str] = []
+    name = None
+    addrs: List[str] = []
     i = 1
     while i < len(e):
         tag = e[i]
@@ -320,10 +351,12 @@ def _build_aid(e: Any) -> AgentIdentifier:
             lt = tag.lower()
             if lt == ":name" and i + 1 < len(e):
                 name = str(e[i + 1])
-                i += 2; continue
+                i += 2
+                continue
             if lt == ":addresses" and i + 1 < len(e):
                 addrs = _extract_sequence(e[i + 1])
-                i += 2; continue
+                i += 2
+                continue
         i += 1
     if name is None:
         raise ValueError("agent-identifier sem :name")
@@ -331,6 +364,7 @@ def _build_aid(e: Any) -> AgentIdentifier:
 
 
 def _build_sd(e: Any) -> ServiceDescription:
+    """Build a :class:`ServiceDescription` from a parsed list."""
     sd = ServiceDescription()
     i = 1
     while i < len(e):
@@ -338,22 +372,35 @@ def _build_sd(e: Any) -> ServiceDescription:
         if isinstance(tag, str):
             lt = tag.lower()
             if lt == ":name" and i + 1 < len(e):
-                sd.name = str(e[i + 1]); i += 2; continue
+                sd.name = str(e[i + 1])
+                i += 2
+                continue
             if lt == ":type" and i + 1 < len(e):
-                sd.type = str(e[i + 1]); i += 2; continue
+                sd.type = str(e[i + 1])
+                i += 2
+                continue
             if lt == ":languages" and i + 1 < len(e):
-                sd.languages = _extract_set(e[i + 1]); i += 2; continue
+                sd.languages = _extract_set(e[i + 1])
+                i += 2
+                continue
             if lt == ":ontologies" and i + 1 < len(e):
-                sd.ontologies = _extract_set(e[i + 1]); i += 2; continue
+                sd.ontologies = _extract_set(e[i + 1])
+                i += 2
+                continue
             if lt == ":protocols" and i + 1 < len(e):
-                sd.protocols = _extract_set(e[i + 1]); i += 2; continue
+                sd.protocols = _extract_set(e[i + 1])
+                i += 2
+                continue
             if lt == ":properties" and i + 1 < len(e):
-                sd.properties = _extract_properties(e[i + 1]); i += 2; continue
+                sd.properties = _extract_properties(e[i + 1])
+                i += 2
+                continue
         i += 1
     return sd
 
 
 def _build_dfad(e: Any) -> DfAgentDescription:
+    """Build a :class:`DfAgentDescription` from a parsed list."""
     if not isinstance(e, list):
         raise ValueError("df-agent-description malformado")
     dfad = DfAgentDescription()
@@ -363,23 +410,36 @@ def _build_dfad(e: Any) -> DfAgentDescription:
         if isinstance(tag, str):
             lt = tag.lower()
             if lt == ":name" and i + 1 < len(e):
-                dfad.name = _build_aid(e[i + 1]); i += 2; continue
+                dfad.name = _build_aid(e[i + 1])
+                i += 2
+                continue
             if lt == ":services" and i + 1 < len(e):
-                dfad.services = _extract_services(e[i + 1]); i += 2; continue
+                dfad.services = _extract_services(e[i + 1])
+                i += 2
+                continue
             if lt == ":languages" and i + 1 < len(e):
-                dfad.languages = _extract_set(e[i + 1]); i += 2; continue
+                dfad.languages = _extract_set(e[i + 1])
+                i += 2
+                continue
             if lt == ":ontologies" and i + 1 < len(e):
-                dfad.ontologies = _extract_set(e[i + 1]); i += 2; continue
+                dfad.ontologies = _extract_set(e[i + 1])
+                i += 2
+                continue
             if lt == ":protocols" and i + 1 < len(e):
-                dfad.protocols = _extract_set(e[i + 1]); i += 2; continue
+                dfad.protocols = _extract_set(e[i + 1])
+                i += 2
+                continue
             if lt == ":ownership" and i + 1 < len(e):
-                dfad.ownership = _extract_set(e[i + 1]); i += 2; continue
+                dfad.ownership = _extract_set(e[i + 1])
+                i += 2
+                continue
         i += 1
     return dfad
 
 
 # --- extractors ------------------------------------------------------------
 def _extract_sequence(e: Any) -> List[str]:
+    """Extract a sequence list from an AST node."""
     if isinstance(e, list) and e and isinstance(e[0], str) and e[0].lower() == "sequence":
         return [str(x) for x in e[1:]]
     if isinstance(e, list):
@@ -388,6 +448,7 @@ def _extract_sequence(e: Any) -> List[str]:
 
 
 def _extract_set(e: Any) -> List[str]:
+    """Extract a set list from an AST node."""
     if isinstance(e, list) and e and isinstance(e[0], str) and e[0].lower() == "set":
         return [str(x) for x in e[1:]]
     if isinstance(e, list):
@@ -396,6 +457,7 @@ def _extract_set(e: Any) -> List[str]:
 
 
 def _extract_properties(e: Any) -> List[Tuple[str, str]]:
+    """Extract DF properties ``[(name, value)]`` from an AST node."""
     out: List[Tuple[str, str]] = []
     items = e[1:] if isinstance(e, list) and e and str(e[0]).lower() == "set" else e
     if not isinstance(items, list):
@@ -409,15 +471,20 @@ def _extract_properties(e: Any) -> List[Tuple[str, str]]:
                 if isinstance(tag, str):
                     lt = tag.lower()
                     if lt == ":name" and j + 1 < len(it):
-                        name = str(it[j + 1]); j += 2; continue
+                        name = str(it[j + 1])
+                        j += 2
+                        continue
                     if lt == ":value" and j + 1 < len(it):
-                        value = str(it[j + 1]); j += 2; continue
+                        value = str(it[j + 1])
+                        j += 2
+                        continue
                 j += 1
             out.append((name, value))
     return out
 
 
 def _extract_services(e: Any) -> List[ServiceDescription]:
+    """Extract a list of :class:`ServiceDescription` from an AST node."""
     items = e[1:] if isinstance(e, list) and e and str(e[0]).lower() == "set" else e
     if not isinstance(items, list):
         items = [items]

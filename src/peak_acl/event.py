@@ -1,12 +1,19 @@
+# MIT License
+# Copyright (c) 2025 Santiago Bossa
+# See LICENSE file in the project root for full license text.
+
 """
 peak_acl.events
 ===============
+High-level structures for routing inbound HTTP-MTP messages.
 
-Estruturas de alto‑nível para o *routing* de mensagens recebidas
-via HTTP‑MTP.  O utilizador final (agente) só lida com MsgEvent.
+End users (agents) only deal with :class:`MsgEvent`, which bundles the original
+``Envelope`` and ``AclMessage`` plus a classified ``kind`` and a decoded
+``payload``.
 """
 
 from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Literal, Any
 
@@ -15,19 +22,47 @@ from .message.envelope import Envelope
 from .message.acl import AclMessage
 
 # --------------------------------------------------------------------------- #
+# Kind discriminator for runtime-classified messages.
+# --------------------------------------------------------------------------- #
 Kind = Literal[
-    "df", "df-done", "df-failure", "df-result", "df-not-understood",
-    "ext-sl0", "ext-raw"
+    "df",
+    "df-done",
+    "df-failure",
+    "df-result",
+    "df-not-understood",
+    "ext-sl0",
+    "ext-raw",
 ]
 
 
+# --------------------------------------------------------------------------- #
+# MsgEvent
+# --------------------------------------------------------------------------- #
 @dataclass
 class MsgEvent:
-    """Mensagem já classificada pelo runtime."""
-    env:      Envelope
-    acl:      AclMessage
-    sender:   AgentIdentifier            # = env.from_
-    kind:     Kind
-    payload:  Any                        # Done / Failure / list[AD] / str / etc.
+    """Runtime-classified message wrapper.
 
-    # Qualquer helper que queiras adicionar no futuro (ex.: reply()).
+    Attributes
+    ----------
+    env :
+        Original transport envelope (sender/receiver, date, etc.).
+    acl :
+        Parsed ACL message.
+    sender :
+        Convenience alias for ``env.from_``.
+    kind :
+        Classification label (see :data:`Kind`).
+    payload :
+        Decoded payload (e.g., ``Done`` / ``Failure`` / list of ADs / raw str).
+
+    Notes
+    -----
+    Additional helpers (e.g., ``reply()``) can be added later without breaking
+    existing code that treats this as a simple data container.
+    """
+
+    env: Envelope
+    acl: AclMessage
+    sender: AgentIdentifier  # = env.from_
+    kind: Kind
+    payload: Any  # Done / Failure / list[AD] / str / etc.

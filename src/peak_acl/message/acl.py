@@ -1,10 +1,16 @@
-"""
-Modelo completo de mensagem FIPA‑ACL para o peak_acl.
+# MIT License
+# Copyright (c) 2025 Santiago Bossa
+# See LICENSE file in the project root for full license text.
 
-• Compatível com JADE
-• Todos os slots FIPA (performative, sender, receiver, reply‑to, …)
-• receivers / reply_to = listas de AgentIdentifier
-• Acesso estilo‑dict (msg["content"]) e helpers msg.get(), "slot" in msg
+"""
+FIPA-ACL message model for the *peak_acl* package.
+
+This module defines :class:`AclMessage`, a Python representation of a FIPA
+Agent Communication Language (ACL) message fully compatible with JADE agents.
+It exposes all canonical ACL slots (``performative``, ``sender``, ``receiver``,
+``reply-to`` …), supports multiple receivers / reply-to addresses, and offers
+*dict-like* access helpers so that existing code can use ``msg["content"]``,
+``"slot" in msg`` or ``msg.get()`` transparently.
 """
 
 from __future__ import annotations
@@ -16,60 +22,108 @@ from typing import Any, Dict, List, Optional
 from .aid import AgentIdentifier
 
 # --------------------------------------------------------------------------- #
-#  Util: normalizar performativa para formato FIPA (UPPERCASE, hífens)
+# _norm_performative
 # --------------------------------------------------------------------------- #
 def _norm_performative(p: str) -> str:
+    """Return a FIPA-compliant performative name (UPPERCASE, hyphen-separated).
+
+    Examples
+    --------
+    >>> _norm_performative("inform_ref")
+    'INFORM-REF'
+    """
     return p.strip().upper().replace("_", "-")
 
 
+# --------------------------------------------------------------------------- #
+# AclMessage
+# --------------------------------------------------------------------------- #
 @dataclass
 class AclMessage:
+    """In-memory representation of a FIPA-ACL message.
+
+    Attributes
+    ----------
+    performative :
+        Speech-act verb (e.g. ``"INFORM"``, ``"REQUEST"``).
+    sender :
+        Identity of the agent originating the message.
+    receivers :
+        Zero or more intended recipients.
+    reply_to :
+        Alternate address(es) the sender wants replies to go to.
+    content :
+        Application payload – free-form string/bytes/object or nested
+        :class:`AclMessage`.
+    language, encoding, ontology, protocol :
+        Optional meta-data slots defined by the FIPA spec.
+    conversation_id, reply_with, in_reply_to, reply_by :
+        Dialogue control & correlation fields.
+    user_params :
+        Extra non-standard ``X-*`` slots preserved round-trip.
+    raw_text :
+        Original text version (debug / logging aid).
+
+    Notes
+    -----
+    The class implements minimal *dict-like* behavior so existing code can do::
+
+        if "ontology" in msg:
+            process(msg["ontology"])
+
+    without breaking type safety for new code that uses attributes directly.
+    """
+
     # ------------------------------------------------------------------ #
-    # Slots FIPA‑ACL
+    # Core FIPA-ACL slots
     # ------------------------------------------------------------------ #
     performative: str
 
-    # Agentes
+    # Agent addresses
     sender: Optional[AgentIdentifier] = None
     receivers: List[AgentIdentifier] = field(default_factory=list)
     reply_to: List[AgentIdentifier] = field(default_factory=list)
 
-    # Conteúdo e meta‑info
-    content: Optional[Any] = None            # str | bytes | object | AclMessage
+    # Payload & meta
+    content: Optional[Any] = None  # str | bytes | object | AclMessage
     language: Optional[str] = None
     encoding: Optional[str] = None
     ontology: Optional[str] = None
     protocol: Optional[str] = None
 
-    # Correlação / diálogo
+    # Conversation control
     conversation_id: Optional[str] = None
     reply_with: Optional[str] = None
     in_reply_to: Optional[str] = None
     reply_by: Optional[datetime] = None
 
-    # Campos definidos pelo utilizador / extensões X‑
+    # User-defined extension slots (X-*)
     user_params: Dict[str, Any] = field(default_factory=dict)
 
-    # Texto original (debug opcional)
+    # Raw text (useful during parsing / debugging)
     raw_text: Optional[str] = None
 
     # ------------------------------------------------------------------ #
-    # Utilidade
+    # Convenience helpers
     # ------------------------------------------------------------------ #
     def add_receiver(self, aid: AgentIdentifier) -> None:
+        """Append *aid* to :pyattr:`receivers`."""
         self.receivers.append(aid)
 
     def add_reply_to(self, aid: AgentIdentifier) -> None:
+        """Append *aid* to :pyattr:`reply_to`."""
         self.reply_to.append(aid)
 
     @property
     def performative_upper(self) -> str:
+        """Return :pyattr:`performative` normalized per FIPA rules."""
         return _norm_performative(self.performative)
 
     # ------------------------------------------------------------------ #
-    # Acesso estilo‑dict (retro‑compat.)
+    # dict-like compatibility layer
     # ------------------------------------------------------------------ #
     def __getitem__(self, key: str):
+        """Allow ``value = msg["slot"]`` style access; raises *KeyError*."""
         k = key.lower()
         if k == "content":
             return self.content
@@ -89,9 +143,11 @@ class AclMessage:
             return self.in_reply_to
         if k in ("reply-by", "replyby"):
             return self.reply_by
+        # Fallback to user-defined params
         return self.user_params[k]
 
     def __setitem__(self, key: str, value: Any):
+        """Allow ``msg["slot"] = value`` assignment semantics."""
         k = key.lower()
         if k == "content":
             self.content = value
@@ -115,22 +171,17 @@ class AclMessage:
             self.user_params[k] = value
 
     # ------------------------------------------------------------------ #
-    # Helpers estilo‑dict moderno
+    # Modern helpers
     # ------------------------------------------------------------------ #
     def get(self, key: str, default: Any = None):
-        """
-        Equivalente a dict.get(): devolve o slot pedido ou *default*
-        caso não exista.
-        """
+        """dict.get() equivalent; returns *default* if *key* is absent."""
         try:
             return self[key]
         except KeyError:
             return default
 
     def __contains__(self, key: str) -> bool:
-        """
-        Permite usar `"slot" in msg`.
-        """
+        """Enable ``"slot" in msg`` syntax."""
         try:
             self[key]
             return True
