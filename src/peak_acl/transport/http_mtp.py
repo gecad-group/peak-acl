@@ -48,13 +48,13 @@ from aiohttp import web
 
 from ..message.envelope import Envelope
 from ..parse import parse as parse_acl
-from ..util.async_utils import safe_create_task
+from ..util.async_utils import safe_create_task  # background task wrapper
 
 if TYPE_CHECKING:  # mypy / pylance only
     from ..message.acl import AclMessage
 
 __all__ = ["HttpMtpServer", "start_server"]
-_NOSET = object()  
+_NOSET = object()  # sentinel (currently unused; kept for future configs)
 
 _LOG = logging.getLogger("peak_acl.http_mtp")
 
@@ -74,18 +74,6 @@ def _split_parts(raw: bytes, boundary_bytes: bytes) -> list[Tuple[bytes, bytes]]
 
     This is a tolerant splitter: it only separates parts and does not interpret
     ``Content-Transfer-Encoding`` or other headers.
-
-    Parameters
-    ----------
-    raw :
-        Full HTTP request body (bytes).
-    boundary_bytes :
-        Boundary marker extracted from the Content-Type header.
-
-    Returns
-    -------
-    list[tuple[bytes, bytes]]
-        Sequence of ``(headers, body)`` byte chunks (headers are raw).
     """
     marker = b"--" + boundary_bytes
     end_marker = marker + b"--"  # not explicitly used; kept for clarity
@@ -134,23 +122,6 @@ def _extract_envelope_acl(raw: bytes, boundary_bytes: bytes) -> Tuple[str, str]:
 
     Uses headers first, then heuristics, then positional fallback. Raises a
     ``ValueError`` if fewer than 2 parts are found.
-
-    Parameters
-    ----------
-    raw :
-        Full request body.
-    boundary_bytes :
-        Boundary marker used to split parts.
-
-    Returns
-    -------
-    tuple[str, str]
-        Decoded (UTF-8) envelope XML text and ACL string.
-
-    Raises
-    ------
-    ValueError
-        If fewer than two parts are present.
     """
     parts = _split_parts(raw, boundary_bytes)
     if len(parts) < 2:
@@ -245,6 +216,7 @@ class HttpMtpServer:
         self._on_message = on_message
         self.inbox: "asyncio.Queue[tuple[Envelope, AclMessage]]" = asyncio.Queue()
 
+        # aiohttp >=3.8 discourages passing loop; keep for backward compat
         if loop is not None:
             self.app = web.Application(client_max_size=client_max_size, loop=loop)
         else:
@@ -274,7 +246,7 @@ class HttpMtpServer:
 
     @web.middleware
     async def _error_middleware(self, request: web.Request, handler):
-        """Convert unexpected exceptions to HTTP 400 and log the traceback."""
+        """Convert unexpected exceptions to HTTP 500 and log the traceback."""
         try:
             return await handler(request)
         except web.HTTPException:
@@ -306,7 +278,7 @@ class HttpMtpServer:
 
         boundary_bytes = m.group(1).encode("utf-8", "ignore")
 
-        # Process in background
+        # Process in background (use safe_create_task to log exceptions)
         safe_create_task(self._process_raw(raw, boundary_bytes), name="mtp_process_raw")
         return resp
 
@@ -333,10 +305,12 @@ class HttpMtpServer:
             acl = parse_acl(acl_txt)
 
         except ValueError as exc:
+            # Known parse/format error
             sample = raw[:200].decode("utf-8", errors="replace").replace("\n", "\\n")
             _LOG.warning("Multipart parse error (%s). Raw[:200]=%r", exc, sample)
             return
         except Exception:
+            # Unexpected error path
             sample = raw[:200].decode("utf-8", errors="replace").replace("\n", "\\n")
             _LOG.exception("Unexpected processing error. Raw[:200]=%r", sample)
             return
@@ -357,11 +331,11 @@ class HttpMtpServer:
             _LOG.exception("Erro no callback on_message (ignorado).")
 
     async def close(self):
-        """Gracefully stop the aiohttp runner/site if started via run()/start_server."""
+        """Gracefully stop aiohttp runner/site if started via run()/start_server."""
         if hasattr(self, "_site") and self._site is not None:
             await self._site.stop()
         if hasattr(self, "_runner") and self._runner is not None:
-            await self._runner.cleanup()    
+            await self._runner.cleanup()
 
     # ------------------------------------------------------------------ #
     async def run(self, host: str = "0.0.0.0", port: int = 7777):
@@ -398,7 +372,7 @@ async def start_server(
         client_max_size=client_max_size,
         loop=loop,
     )
-    
+
     server._runner = web.AppRunner(server.app)
     await server._runner.setup()
     server._site = web.TCPSite(server._runner, bind_host, port)

@@ -7,10 +7,12 @@ peak_acl
 ========
 FIPA-ACL parser and transport helpers for the PEAK framework.
 
-Exports:
-- :func:`parse` – parse ACL strings into :class:`AclMessage`
+Exports
+-------
+- :func:`parse` – converts ACL strings into :class:`AclMessage`
 - :class:`AclMessage` – in-memory ACL message model
-- ``__version__`` – package version (PEP 440), fallback "0.0.0"
+- :func:`dumps` – serialize :class:`AclMessage` to FIPA-ACL string
+- ``__version__`` – package version (PEP 440), fallback ``"0.0.0"``
 """
 
 from importlib.metadata import version as _version, PackageNotFoundError

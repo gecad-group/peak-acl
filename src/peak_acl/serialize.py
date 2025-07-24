@@ -6,11 +6,14 @@
 """
 Serialize :class:`AclMessage` instances to JADE/FIPA-ACL compliant strings.
 
-Key points:
+Key points
+----------
 * Builds the ``(PERFORMATIVE ... :slot value ...)`` syntax expected by JADE.
 * Handles nested SL0 objects and even nested ``AclMessage`` instances.
 * Includes a critical DF/JADE patch to wrap SL content with extra parentheses
-  when needed (see comment in ``dumps()``).
+  when needed (see comment in :func:`dumps`).
+* ``user_params`` values are now escaped/quoted via ``_quote_val`` to avoid
+  breaking the ACL syntax.
 
 Public API
 ----------
@@ -30,7 +33,7 @@ from . import sl0  # import whole module to avoid circular imports
 # Helpers
 # --------------------------------------------------------------------------- #
 def _quote_val(v: Any) -> str:
-    """Return FIPA-safe string for user_params."""
+    """Return a FIPA-safe string for values in ``user_params``."""
     # Keep numbers/bools unquoted
     if isinstance(v, (int, float)):
         return str(v)
@@ -39,6 +42,7 @@ def _quote_val(v: Any) -> str:
     s = str(v)
     s = s.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{s}"'
+
 
 def _aid_to_fipa(aid: AgentIdentifier) -> str:
     """Return an ``agent-identifier`` SL string for *aid*.
@@ -53,11 +57,11 @@ def _aid_to_fipa(aid: AgentIdentifier) -> str:
 
 
 def _content_to_str(c: Any) -> str:
-    """Serialize ``content`` slot to a plain SL-compatible string.
+    """Serialize the ``content`` slot to a plain SL-compatible string.
 
     Supports:
     * SL0 AST objects (Action, Register, Done, etc.) via ``sl0.dumps``.
-    * Nested :class:`AclMessage` via recursive ``dumps()``.
+    * Nested :class:`AclMessage` via recursive :func:`dumps`.
     * Raw strings (unquoted unless already quoted).
     * Fallback to ``str(c)`` for everything else.
     """
@@ -113,8 +117,8 @@ def dumps(msg: AclMessage) -> str:
     * **CRITICAL PATCH for DF/JADE**: if ``language`` starts with ``"fipa-sl"``,
       ensure the content is wrapped in an extra pair of parentheses unless it
       already starts with ``"(("``. This mirrors JADE's expectations.
-    * ``user_params`` are appended verbatim; make sure values are already
-      properly serialized/escaped.
+    * ``user_params`` are escaped/quoted with ``_quote_val`` to keep output
+      syntactically valid.
     """
     p = msg.performative_upper
     parts = [f"({p}"]

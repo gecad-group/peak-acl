@@ -24,11 +24,11 @@ import secrets
 import logging
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Callable, Awaitable
+from functools import partial
 
 from .message.aid import AgentIdentifier
 from .message.acl import AclMessage
 from . import sl0  # serialize SL0 payloads
-from functools import partial
 
 _log = logging.getLogger("peak_acl.conversation")
 
@@ -88,24 +88,26 @@ class ConversationManager:
             ACL meta fields (defaults target FIPA-Request + SL0).
         url :
             Transport destination, passed to ``send_fn``.
+        timeout :
+            Optional seconds to auto-timeout the conversation; if elapsed,
+            the future is completed with ``asyncio.TimeoutError``.
 
         Returns
         -------
         asyncio.Future
             Await to get the final reply message (``INFORM`` or ``FAILURE``).
-            If the first reply is ``REFUSE``, the future is resolved immediately
+            If the first reply is ``REFUSE``, the future resolves immediately
             with that message.
 
         Notes
         -----
         * Conversation ID is generated via `_gen_conv_id()`.
-        * The future is stored in ``_convs`` until completion.
+        * The future is stored in ``_convs`` until completion or timeout.
         """
         conv_id = _gen_conv_id(sender)
-        if isinstance(content, str):
-            content_str = content
-        else:
-            content_str = sl0.dumps(content)
+
+        # Serialize SL0 if needed
+        content_str = content if isinstance(content, str) else sl0.dumps(content)
 
         req = AclMessage(
             performative="request",
@@ -119,17 +121,15 @@ class ConversationManager:
             reply_with=conv_id + ".req",
         )
 
-        fut: asyncio.Future = asyncio.get_event_loop().create_future()
-        self._convs[conv_id] = _Conversation(conv_id, fut, request_msg=req)
         loop = asyncio.get_running_loop()
-        fut: asyncio.Future = loop.create_future()
+        fut: asyncio.Future = loop.create_future()  
         conv = _Conversation(conv_id, fut, request_msg=req)
         self._convs[conv_id] = conv
 
-        # Auto-remove when done
+        # Auto-remove when done (prevents memory leaks on normal completion)
         fut.add_done_callback(lambda f, cid=conv_id: self._convs.pop(cid, None))
 
-        # Optional timeout
+        # Optional timeout scheduling
         if timeout is not None and timeout > 0:
             loop.call_later(timeout, partial(self._on_timeout, conv_id))
 
@@ -159,9 +159,8 @@ class ConversationManager:
                 conv.state = "agreed" if perf == "AGREE" else "refused"
                 if perf == "REFUSE" and not conv.future.done():
                     conv.future.set_result(acl)
-                    # REFUSE is terminal -> drop conversation 
+                    # REFUSE is terminal -> drop conversation
                     self._convs.pop(cid, None)
-
             return
 
         # 2nd reply -> INFORM/FAILURE (or after REFUSE there's nothing else)
@@ -171,8 +170,8 @@ class ConversationManager:
                     conv.future.set_result(acl)
                 conv.state = "done"
                 del self._convs[cid]
-                
-        # ------------------------------------------------------------------ #
+
+    # ------------------------------------------------------------------ #
     def _on_timeout(self, conv_id: str) -> None:
         """Internal: mark a conversation as timed out (if still pending)."""
         conv = self._convs.get(conv_id)
@@ -180,7 +179,7 @@ class ConversationManager:
             return
         if not conv.future.done():
             conv.future.set_exception(asyncio.TimeoutError(f"Conversation {conv_id} timed out"))
-        # Future callback will remove it from dict            
+        # Future done-callback will remove it from the dict
 
 
 # ---------------------------------------------------------------------- #

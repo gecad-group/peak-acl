@@ -6,15 +6,18 @@
 """
 Mini implementation of FIPA-SL0 sufficient to talk to DF/AMS via JADE.
 
-Supported forms:
+Supported forms
+---------------
+Requests:
     (action <aid> (register|deregister|modify <df-agent-description>))
     (action <aid> (search <df-agent-description> [<max-results>]))
+
 Replies:
     (done <expr>)
     (failure <expr>)
     (result <expr> <value>)
 
-Also recognises ``df-agent-description`` and ``service-description`` structures
+It also recognises ``df-agent-description`` and ``service-description`` nodes
 with optional fields (languages, ontologies, protocols, properties, ...).
 
 Parsing is intentionally lenient: unknown slots are ignored.
@@ -27,9 +30,25 @@ from typing import Any, Iterator, List, Optional, Sequence, Tuple, Union
 
 from .message.aid import AgentIdentifier
 
-__all__ = ["ServiceDescription", "DfAgentDescription", "Register", "Deregister", "Modify",
-           "Search", "Action", "Done", "Failure", "Result", "dumps", "loads",
-           "build_ast", "is_done", "is_failure", "is_result", "build_register_content"]
+__all__ = [
+    "ServiceDescription",
+    "DfAgentDescription",
+    "Register",
+    "Deregister",
+    "Modify",
+    "Search",
+    "Action",
+    "Done",
+    "Failure",
+    "Result",
+    "dumps",
+    "loads",
+    "build_ast",
+    "is_done",
+    "is_failure",
+    "is_result",
+    "build_register_content",
+]
 
 
 # ------------------------------------------------------------------ #
@@ -37,7 +56,7 @@ __all__ = ["ServiceDescription", "DfAgentDescription", "Register", "Deregister",
 # ------------------------------------------------------------------ #
 @dataclass
 class ServiceDescription:
-    """SL0 service-description node."""
+    """SL0 ``service-description`` node."""
     name: Optional[str] = None
     type: Optional[str] = None
     languages: List[str] = field(default_factory=list)
@@ -49,7 +68,7 @@ class ServiceDescription:
 
 @dataclass
 class DfAgentDescription:
-    """SL0 df-agent-description node."""
+    """SL0 ``df-agent-description`` node."""
     name: Optional[AgentIdentifier] = None
     services: List[ServiceDescription] = field(default_factory=list)
     languages: List[str] = field(default_factory=list)
@@ -117,17 +136,17 @@ def build_register_content(
 
 
 def is_done(obj: Any) -> bool:
-    """Return ``True`` if *obj* is a ``Done`` node."""
+    """Return ``True`` if *obj* is a :class:`Done` node."""
     return isinstance(obj, Done)
 
 
 def is_failure(obj: Any) -> bool:
-    """Return ``True`` if *obj* is a ``Failure`` node."""
+    """Return ``True`` if *obj* is a :class:`Failure` node."""
     return isinstance(obj, Failure)
 
 
 def is_result(obj: Any) -> bool:
-    """Return ``True`` if *obj* is a ``Result`` node."""
+    """Return ``True`` if *obj* is a :class:`Result` node."""
     return isinstance(obj, Result)
 
 
@@ -169,7 +188,7 @@ def _render(obj: Any) -> str:
 
 
 def _render_aid(aid: AgentIdentifier) -> str:
-    """Serialize an AgentIdentifier into SL0 agent-identifier form."""
+    """Serialize an :class:`AgentIdentifier` into SL0 ``agent-identifier`` form."""
     if aid.addresses:
         seq = " ".join(aid.addresses)
         return f"(agent-identifier :name {aid.name} :addresses (sequence {seq}))"
@@ -230,7 +249,7 @@ def loads(src: str) -> Any:
     return _build_ast(expr)
 
 
-# --- tokenizer -------------------------------------------------------------
+# --- tokenizer ------------------------------------------------------------- #
 def _tokenize(s: str) -> Iterator[str]:
     """Yield tokens from an SL0 string (very simple lexer)."""
     i, n = 0, len(s)
@@ -266,7 +285,7 @@ def _tokenize(s: str) -> Iterator[str]:
         i = j
 
 
-# --- recursive descent to nested Python lists ------------------------------
+# --- recursive descent to nested Python lists ------------------------------ #
 def _parse_expr(toks: List[str], pos: int):
     """Recursive-descent parse to nested Python lists (S-expression style)."""
     if pos >= len(toks):
@@ -289,7 +308,7 @@ def _parse_expr(toks: List[str], pos: int):
     return t, pos + 1
 
 
-# --- AST builder -----------------------------------------------------------
+# --- AST builder ----------------------------------------------------------- #
 def _build_ast(e: Any) -> Any:
     """Transform the nested Python list into our SL0 dataclasses."""
     if not isinstance(e, list) or not e:
@@ -341,8 +360,9 @@ def _build_ast(e: Any) -> Any:
     # Generic fallback
     return [_build_ast(x) for x in e]
 
+
 def build_ast(e: Any) -> Any:
-    """Public wrapper around internal AST builder (for DF manager use)."""
+    """Public wrapper around the internal AST builder (used by DF helpers)."""
     return _build_ast(e)
 
 
@@ -445,7 +465,7 @@ def _build_dfad(e: Any) -> DfAgentDescription:
     return dfad
 
 
-# --- extractors ------------------------------------------------------------
+# --- extractors ------------------------------------------------------------ #
 def _extract_sequence(e: Any) -> List[str]:
     """Extract a sequence list from an AST node."""
     if isinstance(e, list) and e and isinstance(e[0], str) and e[0].lower() == "sequence":

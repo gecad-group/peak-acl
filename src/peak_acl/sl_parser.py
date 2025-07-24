@@ -9,7 +9,7 @@ FIPA-SL parser/serializer based on ANTLR 4.
 Public API
 ----------
 - :func:`parse`  → returns the ANTLR parse tree (proof of concept)
-- :func:`dumps`  → placeholder, not implemented yet
+- :func:`dumps`  → extremely naive serializer (uses ``getText()`` if present)
 
 Currently we only expose the raw parse tree; you can later walk it with a
 visitor (e.g. :class:`FipaSLVisitor`) to build richer Python objects/dataclasses.
@@ -17,12 +17,13 @@ visitor (e.g. :class:`FipaSLVisitor`) to build richer Python objects/dataclasses
 
 from __future__ import annotations
 
-import io  # kept for future use (streams), currently unused
+import io  # kept for future use (streams); currently unused
 
 from antlr4 import InputStream, CommonTokenStream
 from .generated.FipaSLLexer import FipaSLLexer
 from .generated.FipaSLParser import FipaSLParser
-from .generated.FipaSLVisitor import FipaSLVisitor  # to be used later
+from .generated.FipaSLVisitor import FipaSLVisitor  # for downstream visitors
+
 
 # --------------------------------------------------------------------------- #
 # Public API
@@ -42,8 +43,7 @@ def parse(text: str):
 
     Notes
     -----
-    * This is intentionally a thin wrapper; syntax errors will surface via the
-      ANTLR error listener (default behavior).
+    * Thin wrapper: syntax errors are handled by ANTLR's default listeners.
     """
     stream = InputStream(text)
     lexer = FipaSLLexer(stream)
@@ -54,8 +54,12 @@ def parse(text: str):
 
 
 def dumps(tree) -> str:
-    """Very naive serializer: delegates to ANTLR's getText().
-    Warning: spacing/comments lost. Good enough to round-trip simple payloads.
+    """Very naive serializer: delegates to ANTLR's ``getText()`` if available.
+
+    Warning
+    -------
+    * Whitespace/comments are lost.
+    * Only suitable for simple round-trips; not a full pretty-printer.
     """
     return getattr(tree, "getText", lambda: str(tree))()
 
@@ -64,7 +68,7 @@ def dumps(tree) -> str:
 # Optional debug visitor
 # --------------------------------------------------------------------------- #
 class _DebugVisitor(FipaSLVisitor):
-    """Minimal visitor that prints every rule; useful for debugging grammars."""
+    """Minimal visitor that prints every rule; useful for grammar debugging."""
 
     def visitEveryRule(self, ctx):
         print(type(ctx).__name__, ctx.getText())

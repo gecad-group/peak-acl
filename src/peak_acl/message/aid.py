@@ -7,7 +7,7 @@ AgentIdentifier model used by FIPA-ACL messages.
 
 This module defines :class:`AgentIdentifier`, a minimal container for an agent's
 name and a list of transport addresses (URLs). It also provides XML
-(serialization/deserialization) helpers compatible with the XML structure used
+serialization/deserialization helpers compatible with the XML structure used
 by JADE and common FIPA tools.
 """
 
@@ -48,8 +48,8 @@ class AgentIdentifier:
            </agent-identifier>
          </tag>
 
-    * ``xml.etree.ElementTree`` returns ``None`` when a tag has no text; current
-      implementation assumes ``<name>`` is present and each ``<url>`` has text.
+    * ``xml.etree.ElementTree`` returns ``None`` when a tag has no text; this
+      implementation assumes ``<name>`` exists and filters out empty ``<url>``.
     """
 
     name: str
@@ -106,8 +106,8 @@ class AgentIdentifier:
 
         Notes
         -----
-        If ``<name>`` is missing, the empty string is used. ``<url>`` elements
-        with empty text will result in ``None`` entries in the list.
+        If ``<name>`` is missing, the empty string is used.
+        Empty or missing ``<url>`` tags are ignored.
         """
         name = elem.findtext("./agent-identifier/name", "")
         urls = [u.text for u in elem.findall(".//url") if u.text]
