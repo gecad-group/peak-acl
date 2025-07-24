@@ -28,6 +28,7 @@ from typing import Dict, Optional, Callable, Awaitable
 from .message.aid import AgentIdentifier
 from .message.acl import AclMessage
 from . import sl0  # serialize SL0 payloads
+from functools import partial
 
 _log = logging.getLogger("peak_acl.conversation")
 
@@ -73,6 +74,7 @@ class ConversationManager:
         ontology: str = "default",
         protocol: str = "fipa-request",
         url: Optional[str] = None,
+        timeout: Optional[float] = None,
     ):
         """Send a REQUEST and return a Future resolving to INFORM/FAILURE.
 
@@ -119,6 +121,17 @@ class ConversationManager:
 
         fut: asyncio.Future = asyncio.get_event_loop().create_future()
         self._convs[conv_id] = _Conversation(conv_id, fut, request_msg=req)
+        loop = asyncio.get_running_loop()
+        fut: asyncio.Future = loop.create_future()
+        conv = _Conversation(conv_id, fut, request_msg=req)
+        self._convs[conv_id] = conv
+
+        # Auto-remove when done
+        fut.add_done_callback(lambda f, cid=conv_id: self._convs.pop(cid, None))
+
+        # Optional timeout
+        if timeout is not None and timeout > 0:
+            loop.call_later(timeout, partial(self._on_timeout, conv_id))
 
         await self._send_fn(req, url)  # fire REQUEST
         return fut  # await fut → AclMessage
@@ -139,22 +152,35 @@ class ConversationManager:
         conv = self._convs[cid]
         perf = acl.performative_upper
 
-        # 1st reply → AGREE or REFUSE
+        # 1st reply -> AGREE or REFUSE
         if conv.state == "pending":
             if perf in {"AGREE", "REFUSE"}:
                 conv.reply_agree_refuse = acl
                 conv.state = "agreed" if perf == "AGREE" else "refused"
                 if perf == "REFUSE" and not conv.future.done():
                     conv.future.set_result(acl)
+                    # REFUSE is terminal -> drop conversation 
+                    self._convs.pop(cid, None)
+
             return
 
-        # 2nd reply → INFORM/FAILURE (or after REFUSE there's nothing else)
+        # 2nd reply -> INFORM/FAILURE (or after REFUSE there's nothing else)
         if conv.state in {"agreed", "refused"}:
             if perf in {"INFORM", "FAILURE"}:
                 if not conv.future.done():
                     conv.future.set_result(acl)
                 conv.state = "done"
                 del self._convs[cid]
+                
+        # ------------------------------------------------------------------ #
+    def _on_timeout(self, conv_id: str) -> None:
+        """Internal: mark a conversation as timed out (if still pending)."""
+        conv = self._convs.get(conv_id)
+        if not conv:
+            return
+        if not conv.future.done():
+            conv.future.set_exception(asyncio.TimeoutError(f"Conversation {conv_id} timed out"))
+        # Future callback will remove it from dict            
 
 
 # ---------------------------------------------------------------------- #
