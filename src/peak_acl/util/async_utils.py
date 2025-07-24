@@ -1,3 +1,7 @@
+# MIT License
+# Copyright (c) 2025 Santiago Bossa
+# See LICENSE file in the project root for full license text.
+
 import asyncio
 import logging
 

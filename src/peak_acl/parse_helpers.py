@@ -22,6 +22,7 @@ from typing import Any, Iterable, List, Optional
 
 from .message.aid import AgentIdentifier
 from .message.acl import AclMessage
+from datetime import timezone
 
 
 # --------------------------------------------------------------------------- #
@@ -135,7 +136,8 @@ def to_datetime(v: Any) -> Optional[datetime]:
     s = str(v).strip().strip('"')
     for fmt in ("%Y%m%dT%H%M%S", "%Y%m%dZ%H%M%S", "%Y-%m-%dT%H:%M:%S", "%Y%m%d"):
         try:
-            return datetime.strptime(s, fmt)
+            dt = datetime.strptime(s, fmt)
+            return dt.replace(tzinfo=timezone.utc)
         except ValueError:
             pass
     return None

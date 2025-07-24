@@ -27,6 +27,10 @@ from typing import Any, Iterator, List, Optional, Sequence, Tuple, Union
 
 from .message.aid import AgentIdentifier
 
+__all__ = ["ServiceDescription", "DfAgentDescription", "Register", "Deregister", "Modify",
+           "Search", "Action", "Done", "Failure", "Result", "dumps", "loads",
+           "build_ast", "is_done", "is_failure", "is_result", "build_register_content"]
+
 
 # ------------------------------------------------------------------ #
 # AST dataclasses
@@ -336,6 +340,10 @@ def _build_ast(e: Any) -> Any:
 
     # Generic fallback
     return [_build_ast(x) for x in e]
+
+def build_ast(e: Any) -> Any:
+    """Public wrapper around internal AST builder (for DF manager use)."""
+    return _build_ast(e)
 
 
 def _build_aid(e: Any) -> AgentIdentifier:

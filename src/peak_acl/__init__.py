@@ -20,12 +20,9 @@ from importlib.metadata import version as _version, PackageNotFoundError
 # --------------------------------------------------------------------------- #
 from .parse import parse
 from .message.acl import AclMessage
+from .serialize import dumps
 
-__all__: list[str] = ["parse", "AclMessage", "__version__"]
-
-# NOTE: "dumps" is appended to __all__ but not imported here.
-# If you intend to expose it, import from the correct module above.
-__all__.append("dumps")
+__all__: list[str] = ["parse", "AclMessage", "dumps", "__version__"]
 
 # --------------------------------------------------------------------------- #
 # Version

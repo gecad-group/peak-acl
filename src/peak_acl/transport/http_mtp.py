@@ -54,6 +54,7 @@ if TYPE_CHECKING:  # mypy / pylance only
     from ..message.acl import AclMessage
 
 __all__ = ["HttpMtpServer", "start_server"]
+_NOSET = object()  
 
 _LOG = logging.getLogger("peak_acl.http_mtp")
 
@@ -280,7 +281,7 @@ class HttpMtpServer:
             raise
         except Exception as exc:  # pragma: no cover
             _LOG.exception("Erro não tratado no HTTP-MTP")
-            raise web.HTTPBadRequest(text=str(exc)) from exc
+            raise web.HTTPInternalServerError(text="internal error") from exc
 
     # ------------------------------------------------------------------ #
     # /acc handler
@@ -331,12 +332,13 @@ class HttpMtpServer:
             env = Envelope.from_xml(env_txt)
             acl = parse_acl(acl_txt)
 
-        except Exception:
-            # Show a sample of the body for diagnostics
+        except ValueError as exc:
             sample = raw[:200].decode("utf-8", errors="replace").replace("\n", "\\n")
-            _LOG.exception(
-                "Falha a processar HTTP-MTP (descartado). Raw[:200]=%r", sample
-            )
+            _LOG.warning("Multipart parse error (%s). Raw[:200]=%r", exc, sample)
+            return
+        except Exception:
+            sample = raw[:200].decode("utf-8", errors="replace").replace("\n", "\\n")
+            _LOG.exception("Unexpected processing error. Raw[:200]=%r", sample)
             return
 
         # Deliver
@@ -354,15 +356,25 @@ class HttpMtpServer:
         except Exception:  # pragma: no cover - external callback
             _LOG.exception("Erro no callback on_message (ignorado).")
 
+    async def close(self):
+        """Gracefully stop the aiohttp runner/site if started via run()/start_server."""
+        if hasattr(self, "_site") and self._site is not None:
+            await self._site.stop()
+        if hasattr(self, "_runner") and self._runner is not None:
+            await self._runner.cleanup()    
+
     # ------------------------------------------------------------------ #
     async def run(self, host: str = "0.0.0.0", port: int = 7777):
         """Blocking run helper (manual debug usage)."""
-        runner = web.AppRunner(self.app)
-        await runner.setup()
-        site = web.TCPSite(runner, host, port)
+        self._runner = web.AppRunner(self.app)
+        await self._runner.setup()
+        self._site = web.TCPSite(self._runner, host, port)
         _LOG.info("HttpMtpServer a escutar em http://%s:%d%s", host, port, ACC_ENDPOINT)
-        await site.start()
-        await asyncio.Event().wait()  # block forever
+        await self._site.start()
+        try:
+            await asyncio.Event().wait()  # block forever
+        finally:
+            await self.close()
 
 
 # --------------------------------------------------------------------------- #
@@ -386,14 +398,17 @@ async def start_server(
         client_max_size=client_max_size,
         loop=loop,
     )
-    runner = web.AppRunner(server.app)
-    await runner.setup()
-    site = web.TCPSite(runner, bind_host, port)
-    await site.start()
+    
+    server._runner = web.AppRunner(server.app)
+    await server._runner.setup()
+    server._site = web.TCPSite(server._runner, bind_host, port)
+    await server._site.start()
+
     _LOG.info(
         "HttpMtpServer a escutar em http://%s:%d%s", bind_host, port, ACC_ENDPOINT
     )
-    return server, runner, site
+
+    return server, server._runner, server._site
 
 
 # --------------------------------------------------------------------------- #

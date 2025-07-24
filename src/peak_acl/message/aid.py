@@ -110,5 +110,5 @@ class AgentIdentifier:
         with empty text will result in ``None`` entries in the list.
         """
         name = elem.findtext("./agent-identifier/name", "")
-        urls = [u.text for u in elem.findall(".//url")]
+        urls = [u.text for u in elem.findall(".//url") if u.text]
         return cls(name, urls)

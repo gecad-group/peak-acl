@@ -45,5 +45,11 @@ def discover_ip() -> str:
     try:
         s.connect(("8.8.8.8", 80))
         return s.getsockname()[0]
+    except OSError:
+        #Fallback if the connection fails (e.g., no network)
+        try:
+            return socket.gethostbyname(socket.gethostname())
+        except Exception:
+            return "127.0.0.1" # Fallback to localhost
     finally:
         s.close()

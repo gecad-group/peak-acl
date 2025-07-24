@@ -53,9 +53,11 @@ def parse(text: str):
     return tree
 
 
-def dumps(tree) -> str:  # placeholder
-    """Serialize a parse tree back to SL text (not implemented)."""
-    raise NotImplementedError("serializer not implemented yet")
+def dumps(tree) -> str:
+    """Very naive serializer: delegates to ANTLR's getText().
+    Warning: spacing/comments lost. Good enough to round-trip simple payloads.
+    """
+    return getattr(tree, "getText", lambda: str(tree))()
 
 
 # --------------------------------------------------------------------------- #

@@ -32,7 +32,7 @@ from .multipart import build_multipart
 
 __all__ = ["HttpMtpClient", "HttpMtpError"]
 
-_LOG = logging.getLogger("peak_acl.http_mtp_client")
+log = logging.getLogger("peak_acl.http_mtp_client")
 
 
 # --------------------------------------------------------------------------- #
@@ -130,9 +130,11 @@ class HttpMtpClient:
             try:
                 async with self.session.post(acc_url, data=body, headers=headers) as resp:
                     if resp.status == 200:
-                        _LOG.info("Sent to %s (status 200)", acc_url)
+                        log.info("Sent to %s (status 200)", acc_url)
                         return
-                    raise HttpMtpError(f"ACC returned {resp.status}")
+                    text = (await resp.text())[:256]
+                    raise HttpMtpError(f"ACC returned {resp.status}: {text}")
+                
             except (aiohttp.ClientError, asyncio.TimeoutError) as exc:
                 attempt += 1
                 if attempt > self.retries:
@@ -141,7 +143,7 @@ class HttpMtpClient:
                     ) from exc
 
                 jitter = random.uniform(0, 0.3 * delay)
-                _LOG.warning(
+                log.warning(
                     "Attempt %d failed (%s); retrying in %.1fs",
                     attempt,
                     exc,

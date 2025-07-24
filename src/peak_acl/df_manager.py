@@ -278,7 +278,7 @@ def extract_search_results_from_value(
             else:
                 # try to rebuild AST and convert
                 try:
-                    obj = _sl0._build_ast(it)  # pyright: ignore [reportPrivateUsage]
+                    obj = _sl0.build_ast(it)  # pyright: ignore [reportPrivateUsage]
                     if isinstance(obj, _sl0.DfAgentDescription):
                         ads.append(fipa_am.from_sl0(obj))  # type: ignore[arg-type]
                 except Exception:
