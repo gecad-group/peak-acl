@@ -29,6 +29,17 @@ from . import sl0  # import whole module to avoid circular imports
 # --------------------------------------------------------------------------- #
 # Helpers
 # --------------------------------------------------------------------------- #
+def _quote_val(v: Any) -> str:
+    """Return FIPA-safe string for user_params."""
+    # Keep numbers/bools unquoted
+    if isinstance(v, (int, float)):
+        return str(v)
+    if isinstance(v, bool):
+        return str(v).lower()
+    s = str(v)
+    s = s.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{s}"'
+
 def _aid_to_fipa(aid: AgentIdentifier) -> str:
     """Return an ``agent-identifier`` SL string for *aid*.
 
@@ -150,7 +161,7 @@ def dumps(msg: AclMessage) -> str:
         parts.append(f" :reply-by {msg.reply_by.strftime('%Y%m%dT%H%M%S')}")
 
     for k, v in msg.user_params.items():
-        parts.append(f" :{k} {v}")
+        parts.append(f" :{k} {_quote_val(v)}")
 
     parts.append(")")
     return "".join(parts)
