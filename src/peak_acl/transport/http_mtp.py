@@ -48,6 +48,7 @@ from aiohttp import web
 
 from ..message.envelope import Envelope
 from ..parse import parse as parse_acl
+from ..util.async_utils import safe_create_task
 
 if TYPE_CHECKING:  # mypy / pylance only
     from ..message.acl import AclMessage
@@ -243,10 +244,10 @@ class HttpMtpServer:
         self._on_message = on_message
         self.inbox: "asyncio.Queue[tuple[Envelope, AclMessage]]" = asyncio.Queue()
 
-        self.app: web.Application = web.Application(
-            client_max_size=client_max_size,
-            loop=loop,
-        )
+        if loop is not None:
+            self.app = web.Application(client_max_size=client_max_size, loop=loop)
+        else:
+            self.app = web.Application(client_max_size=client_max_size)
 
         # Middlewares
         self.app.middlewares.extend([self._logging_middleware, self._error_middleware])
@@ -305,7 +306,7 @@ class HttpMtpServer:
         boundary_bytes = m.group(1).encode("utf-8", "ignore")
 
         # Process in background
-        asyncio.create_task(self._process_raw(raw, boundary_bytes))
+        safe_create_task(self._process_raw(raw, boundary_bytes), name="mtp_process_raw")
         return resp
 
     # ------------------------------------------------------------------ #

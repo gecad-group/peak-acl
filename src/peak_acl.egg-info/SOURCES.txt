@@ -37,6 +37,7 @@ src/peak_acl/message/envelope.py
 src/peak_acl/transport/http_client.py
 src/peak_acl/transport/http_mtp.py
 src/peak_acl/transport/multipart.py
+src/peak_acl/util/async_utils.py
 src/peak_acl/util/net.py
 tests/test_df_simulation.py
 tests/test_http_client.py
