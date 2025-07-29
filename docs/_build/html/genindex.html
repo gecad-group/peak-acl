@@ -115,10 +115,18 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="peak_acl.html#peak_acl.router.classify_message">classify_message() (in module peak_acl.router)</a>
 </li>
-      <li><a href="peak_acl.html#id11">content (peak_acl.AclMessage attribute)</a>, <a href="peak_acl.html#peak_acl.AclMessage.content">[1]</a>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.client">client (peak_acl.runtime.CommEndpoint attribute)</a>
+</li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.close">close() (peak_acl.runtime.CommEndpoint method)</a>
+</li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint">CommEndpoint (class in peak_acl.runtime)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="peak_acl.html#id11">content (peak_acl.AclMessage attribute)</a>, <a href="peak_acl.html#peak_acl.AclMessage.content">[1]</a>
+</li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.conv_mgr">conv_mgr (peak_acl.runtime.CommEndpoint attribute)</a>
+</li>
       <li><a href="peak_acl.html#peak_acl.AclMessage.conversation_id">conversation_id (peak_acl.AclMessage attribute)</a>
 </li>
       <li><a href="peak_acl.html#peak_acl.conversation.ConversationManager">ConversationManager (class in peak_acl.conversation)</a>
@@ -139,6 +147,10 @@
 </li>
       <li><a href="peak_acl.html#peak_acl.df_manager.deregister">deregister() (in module peak_acl.df_manager)</a>
 </li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.deregister_df">deregister_df() (peak_acl.runtime.CommEndpoint method)</a>
+</li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.df_aid">df_aid (peak_acl.runtime.CommEndpoint attribute)</a>
+</li>
       <li><a href="peak_acl.html#peak_acl.sl0.Deregister.dfad">dfad (peak_acl.sl0.Deregister attribute)</a>
 
       <ul>
@@ -152,6 +164,8 @@
       <li><a href="peak_acl.html#peak_acl.sl0.DfAgentDescription">DfAgentDescription (class in peak_acl.sl0)</a>
 </li>
       <li><a href="peak_acl.html#peak_acl.dispatcher.InboundDispatcher.dispatch">dispatch() (peak_acl.dispatcher.InboundDispatcher method)</a>
+</li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.dispatcher">dispatcher (peak_acl.runtime.CommEndpoint attribute)</a>
 </li>
       <li><a href="peak_acl.html#peak_acl.sl0.Done">Done (class in peak_acl.sl0)</a>
 </li>
@@ -209,12 +223,14 @@
 </li>
       <li><a href="peak_acl.html#peak_acl.dispatcher.InboundDispatcher">InboundDispatcher (class in peak_acl.dispatcher)</a>
 </li>
-      <li><a href="peak_acl.html#peak_acl.sl_visitor.SLAction.inner">inner (peak_acl.sl_visitor.SLAction attribute)</a>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.inbox">inbox (peak_acl.runtime.CommEndpoint attribute)</a>
 </li>
-      <li><a href="peak_acl.html#peak_acl.df_manager.is_df_done_msg">is_df_done_msg() (in module peak_acl.df_manager)</a>
+      <li><a href="peak_acl.html#peak_acl.sl_visitor.SLAction.inner">inner (peak_acl.sl_visitor.SLAction attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="peak_acl.html#peak_acl.df_manager.is_df_done_msg">is_df_done_msg() (in module peak_acl.df_manager)</a>
+</li>
       <li><a href="peak_acl.html#peak_acl.df_manager.is_df_failure_msg">is_df_failure_msg() (in module peak_acl.df_manager)</a>
 </li>
       <li><a href="peak_acl.html#peak_acl.sl0.is_done">is_done() (in module peak_acl.sl0)</a>
@@ -295,6 +311,8 @@
 </li>
         <li><a href="peak_acl.html#module-peak_acl.router">peak_acl.router</a>
 </li>
+        <li><a href="peak_acl.html#module-peak_acl.runtime">peak_acl.runtime</a>
+</li>
         <li><a href="peak_acl.html#module-peak_acl.serialize">peak_acl.serialize</a>
 </li>
         <li><a href="peak_acl.html#module-peak_acl.sl0">peak_acl.sl0</a>
@@ -311,6 +329,8 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="peak_acl.html#peak_acl.event.MsgEvent">MsgEvent (class in peak_acl.event)</a>
+</li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.my_aid">my_aid (peak_acl.runtime.CommEndpoint attribute)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -462,6 +482,13 @@
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li>
+    peak_acl.runtime
+
+      <ul>
+        <li><a href="peak_acl.html#module-peak_acl.runtime">module</a>
+</li>
+      </ul></li>
+      <li>
     peak_acl.serialize
 
       <ul>
@@ -561,8 +588,12 @@
 </li>
       <li><a href="peak_acl.html#peak_acl.df_manager.register">register() (in module peak_acl.df_manager)</a>
 </li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.register_df">register_df() (peak_acl.runtime.CommEndpoint method)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.register_handler">register_handler() (peak_acl.runtime.CommEndpoint method)</a>
+</li>
       <li><a href="peak_acl.html#peak_acl.fipa_am.render_register_content">render_register_content() (in module peak_acl.fipa_am)</a>
 </li>
       <li><a href="peak_acl.html#peak_acl.AclMessage.reply_by">reply_by (peak_acl.AclMessage attribute)</a>
@@ -573,6 +604,8 @@
 </li>
       <li><a href="peak_acl.html#peak_acl.sl0.Result">Result (class in peak_acl.sl0)</a>
 </li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.runner">runner (peak_acl.runtime.CommEndpoint attribute)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -581,30 +614,42 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="peak_acl.html#peak_acl.sl0.Search">Search (class in peak_acl.sl0)</a>
 </li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.search_df">search_df() (peak_acl.runtime.CommEndpoint method)</a>
+</li>
       <li><a href="peak_acl.html#peak_acl.df_manager.search_services">search_services() (in module peak_acl.df_manager)</a>
 </li>
-      <li><a href="peak_acl.html#peak_acl.conversation.ConversationManager.send_request">send_request() (peak_acl.conversation.ConversationManager method)</a>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.send_acl">send_acl() (peak_acl.runtime.CommEndpoint method)</a>
 </li>
+      <li><a href="peak_acl.html#peak_acl.conversation.ConversationManager.send_request">send_request() (peak_acl.conversation.ConversationManager method)</a>
+
+      <ul>
+        <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.send_request">(peak_acl.runtime.CommEndpoint method)</a>
+</li>
+      </ul></li>
       <li><a href="peak_acl.html#id16">sender (peak_acl.AclMessage attribute)</a>, <a href="peak_acl.html#peak_acl.AclMessage.sender">[1]</a>
 
       <ul>
         <li><a href="peak_acl.html#id5">(peak_acl.event.MsgEvent attribute)</a>, <a href="peak_acl.html#peak_acl.event.MsgEvent.sender">[1]</a>
 </li>
       </ul></li>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.server">server (peak_acl.runtime.CommEndpoint attribute)</a>
+</li>
       <li><a href="peak_acl.html#peak_acl.fipa_am.ServiceDescription">ServiceDescription (class in peak_acl.fipa_am)</a>
 
       <ul>
         <li><a href="peak_acl.html#peak_acl.sl0.ServiceDescription">(class in peak_acl.sl0)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="peak_acl.html#peak_acl.fipa_am.AgentDescription.services">services (peak_acl.fipa_am.AgentDescription attribute)</a>
 
       <ul>
         <li><a href="peak_acl.html#peak_acl.sl0.DfAgentDescription.services">(peak_acl.sl0.DfAgentDescription attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="peak_acl.html#peak_acl.runtime.CommEndpoint.site">site (peak_acl.runtime.CommEndpoint attribute)</a>
+</li>
       <li><a href="peak_acl.html#peak_acl.sl_visitor.SLAction">SLAction (class in peak_acl.sl_visitor)</a>
 </li>
       <li><a href="peak_acl.html#peak_acl.sl_visitor.SLFunc">SLFunc (class in peak_acl.sl_visitor)</a>
@@ -618,6 +663,8 @@
       <li><a href="peak_acl.html#peak_acl.sl_visitor.SLString">SLString (class in peak_acl.sl_visitor)</a>
 </li>
       <li><a href="peak_acl.html#peak_acl.sl_visitor.SLVar">SLVar (class in peak_acl.sl_visitor)</a>
+</li>
+      <li><a href="peak_acl.html#peak_acl.runtime.start_endpoint">start_endpoint() (in module peak_acl.runtime)</a>
 </li>
   </ul></td>
 </tr></table>

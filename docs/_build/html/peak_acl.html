@@ -864,8 +864,167 @@ may need a stronger check (e.g. address match).</p></li>
 </dd></dl>
 
 </section>
-<section id="peak-acl-runtime-module">
-<h2>peak_acl.runtime module<a class="headerlink" href="#peak-acl-runtime-module" title="Link to this heading">¶</a></h2>
+<section id="module-peak_acl.runtime">
+<span id="peak-acl-runtime-module"></span><h2>peak_acl.runtime module<a class="headerlink" href="#module-peak_acl.runtime" title="Link to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.runtime.</span></span><span class="sig-name descname"><span class="pre">CommEndpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">my_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inbox</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">server</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">runner</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">site</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_aid=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dispatcher=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conv_mgr=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_events=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">_bg_task=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.runtime.CommEndpoint" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">AsyncIterator</span></code>[<a class="reference internal" href="#peak_acl.event.MsgEvent" title="peak_acl.event.MsgEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">MsgEvent</span></code></a>]</p>
+<p>Endpoint = HTTP‑MTP server + client + helpers.</p>
+<ul class="simple">
+<li><p>Usa callbacks via register_handler()</p></li>
+<li><p>Continúa a suportar <cite>async for evt in ep</cite>
+(eventos ficam numa fila interna _events)</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>my_aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>inbox</strong> (<em>asyncio.Queue</em>)</p></li>
+<li><p><strong>client</strong> (<em>HttpMtpClient</em>)</p></li>
+<li><p><strong>server</strong> (<em>HttpMtpServer</em>)</p></li>
+<li><p><strong>runner</strong> (<em>aiohttp.web.AppRunner</em>)</p></li>
+<li><p><strong>site</strong> (<em>aiohttp.web.TCPSite</em>)</p></li>
+<li><p><strong>df_aid</strong> (<em>Optional</em><em>[</em><em>AgentIdentifier</em><em>]</em>)</p></li>
+<li><p><strong>dispatcher</strong> (<a class="reference internal" href="#peak_acl.dispatcher.InboundDispatcher" title="peak_acl.dispatcher.InboundDispatcher"><em>InboundDispatcher</em></a>)</p></li>
+<li><p><strong>conv_mgr</strong> (<a class="reference internal" href="#peak_acl.conversation.ConversationManager" title="peak_acl.conversation.ConversationManager"><em>ConversationManager</em></a><em> | </em><em>None</em>)</p></li>
+<li><p><strong>_events</strong> (<em>asyncio.Queue</em><em>[</em><a class="reference internal" href="#peak_acl.event.MsgEvent" title="peak_acl.event.MsgEvent"><em>event.MsgEvent</em></a><em>]</em>)</p></li>
+<li><p><strong>_bg_task</strong> (<em>Optional</em><em>[</em><em>asyncio.Task</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.client">
+<span class="sig-name descname"><span class="pre">client</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">HttpMtpClient</span></em><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.client" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.close">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.close" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.conv_mgr">
+<span class="sig-name descname"><span class="pre">conv_mgr</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.conversation.ConversationManager" title="peak_acl.conversation.ConversationManager"><span class="pre">ConversationManager</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.conv_mgr" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.deregister_df">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">deregister_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_aid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.deregister_df" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.df_aid">
+<span class="sig-name descname"><span class="pre">df_aid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">AgentIdentifier</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.df_aid" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.dispatcher">
+<span class="sig-name descname"><span class="pre">dispatcher</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.dispatcher.InboundDispatcher" title="peak_acl.dispatcher.InboundDispatcher"><span class="pre">InboundDispatcher</span></a></em><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.dispatcher" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.inbox">
+<span class="sig-name descname"><span class="pre">inbox</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">asyncio.Queue</span></em><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.inbox" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.my_aid">
+<span class="sig-name descname"><span class="pre">my_aid</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">AgentIdentifier</span></em><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.my_aid" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.register_df">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">register_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">languages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontologies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ownership</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.register_df" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.register_handler">
+<span class="sig-name descname"><span class="pre">register_handler</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontology</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cb</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.register_handler" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>performative</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>protocol</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ontology</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>cb</strong> (<em>Callback</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.runner">
+<span class="sig-name descname"><span class="pre">runner</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">aiohttp.web.AppRunner</span></em><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.runner" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.search_df">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">search_df</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_aid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.search_df" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.send_acl">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">send_acl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performative</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontology</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conversation_id</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reply_with</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_reply_to</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reply_by</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.send_acl" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>to</strong> (<em>AgentIdentifier</em><em> | </em><em>Iterable</em><em>[</em><em>AgentIdentifier</em><em>]</em>)</p></li>
+<li><p><strong>performative</strong> (<em>str</em>)</p></li>
+<li><p><strong>content</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>language</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ontology</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>protocol</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>conversation_id</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>reply_with</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>in_reply_to</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>reply_by</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.send_request">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">send_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.send_request" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.server">
+<span class="sig-name descname"><span class="pre">server</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">HttpMtpServer</span></em><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.server" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.runtime.CommEndpoint.site">
+<span class="sig-name descname"><span class="pre">site</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">aiohttp.web.TCPSite</span></em><a class="headerlink" href="#peak_acl.runtime.CommEndpoint.site" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.runtime.start_endpoint">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.runtime.</span></span><span class="sig-name descname"><span class="pre">start_endpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">my_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bind_host</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'0.0.0.0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">auto_register</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_aid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_client</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.runtime.start_endpoint" title="Link to this definition">¶</a></dt>
+<dd><p>Cria server + client, arranca loop interno e devolve CommEndpoint.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>my_aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>bind_host</strong> (<em>str</em>)</p></li>
+<li><p><strong>auto_register</strong> (<em>bool</em>)</p></li>
+<li><p><strong>df_aid</strong> (<em>AgentIdentifier</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>services</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>] </em><em>| </em><em>None</em>)</p></li>
+<li><p><strong>http_client</strong> (<em>HttpMtpClient</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#peak_acl.runtime.CommEndpoint" title="peak_acl.runtime.CommEndpoint"><em>CommEndpoint</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-peak_acl.serialize">
 <span id="peak-acl-serialize-module"></span><h2>peak_acl.serialize module<a class="headerlink" href="#module-peak_acl.serialize" title="Link to this heading">¶</a></h2>
