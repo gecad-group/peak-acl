@@ -20,8 +20,8 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Iterable, List, Optional
 
-from .message.aid import AgentIdentifier
-from .message.acl import AclMessage
+from ..message.aid import AgentIdentifier
+from ..message.acl import AclMessage
 from datetime import timezone
 
 

@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
-from .message.aid import AgentIdentifier
+from ..message.aid import AgentIdentifier
 from . import sl0
 
 

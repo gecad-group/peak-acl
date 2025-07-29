@@ -20,7 +20,7 @@ from importlib.metadata import version as _version, PackageNotFoundError
 # --------------------------------------------------------------------------- #
 # Public API re-exports
 # --------------------------------------------------------------------------- #
-from .parse import parse
+from .parser import parse
 from .message.acl import AclMessage
 from .serialize import dumps
 

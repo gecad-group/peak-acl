@@ -17,8 +17,8 @@ from __future__ import annotations
 
 from antlr4 import InputStream, CommonTokenStream
 
-from .generated.ACLLexer import ACLLexer
-from .generated.ACLParser import ACLParser
+from ..generated.ACLLexer import ACLLexer
+from ..generated.ACLParser import ACLParser
 from .visitor import MessageBuilder
 
 

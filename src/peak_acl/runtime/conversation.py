@@ -26,9 +26,9 @@ from dataclasses import dataclass, field
 from typing import Dict, Optional, Callable, Awaitable
 from functools import partial
 
-from .message.aid import AgentIdentifier
-from .message.acl import AclMessage
-from . import sl0  # serialize SL0 payloads
+from ..message.aid import AgentIdentifier
+from ..message.acl import AclMessage
+from ..sl import sl0  # serialize SL0 payloads
 
 _log = logging.getLogger("peak_acl.conversation")
 
