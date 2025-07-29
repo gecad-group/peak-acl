@@ -12,6 +12,30 @@ peak\_acl.content module
    :show-inheritance:
    :undoc-members:
 
+peak\_acl.message package
+------------------------
+
+.. automodule:: peak_acl.message
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+peak\_acl.transport package
+--------------------------
+
+.. automodule:: peak_acl.transport
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+peak\_acl.util package
+----------------------
+
+.. automodule:: peak_acl.util
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
 peak\_acl.runtime.conversation module
 -----------------------------
 

@@ -14,6 +14,8 @@ from .df_manager import (
     extract_search_results,
 )
 from .event import MsgEvent, Kind
+from .router import classify_message
+
 
 __all__ = [
     "CommEndpoint",
@@ -29,6 +31,7 @@ __all__ = [
     "is_df_done_msg",
     "is_df_failure_msg",
     "extract_search_results",
+    "classify_message",
     "MsgEvent",
     "Kind",
 ]

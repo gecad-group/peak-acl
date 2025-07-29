@@ -1,8 +1,6 @@
 import re
-from peak_acl.message.aid import AgentIdentifier
-from peak_acl.message.acl import AclMessage
-from peak_acl.message.envelope import Envelope
-from peak_acl.transport.multipart import build_multipart
+from peak_acl.message import AgentIdentifier, AclMessage, Envelope
+from peak_acl.transport import build_multipart
 from peak_acl.transport.http_mtp import _extract_envelope_acl
 from peak_acl.parser import parse
 
