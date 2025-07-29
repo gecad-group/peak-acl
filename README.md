@@ -18,6 +18,7 @@
 - [Working with SL0 / DF Helpers](#working-with-sl0--df-helpers)
 - [Conversation Manager](#conversation-manager)
 - [Events & Routing](#events--routing)
+- [Documentation](#documentation)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -152,6 +153,18 @@ It also supports optional timeouts.
 
 ---
 
+## Documentation
+HTML API documentation is generated with **Sphinx**. To build it locally:
+
+```bash
+pip install sphinx
+make -C docs html
+```
+
+The resulting site will be available under `docs/_build/html/index.html`.
+
+---
+
 ## Roadmap
 - Integrate richer SL (beyond SL0) AST/visitor support.
 - Optional IPv6-aware network utils.
@@ -171,5 +184,4 @@ Pull requests are welcome! For substantial changes, open a discussion first.
 
 ## License
 `peak-acl` is **free and open-source** software. See the `LICENSE` file for full text.
-```
-```
+

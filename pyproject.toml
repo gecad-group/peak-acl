@@ -17,3 +17,4 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio", "black", "isort", "mypy"]
+docs = ["sphinx"]

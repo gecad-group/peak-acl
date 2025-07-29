@@ -24,6 +24,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
+    'sphinx.ext.autosectionlabel',
 ]
 
 autosummary_generate = True
@@ -38,3 +39,10 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
 html_theme = 'alabaster'
 html_static_path = ['_static']
+
+# Make project modules importable
+import os
+import sys
+sys.path.insert(0, os.path.abspath('../src'))
+
+autodoc_typehints = 'description'
