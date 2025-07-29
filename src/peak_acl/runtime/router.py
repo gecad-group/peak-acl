@@ -22,7 +22,7 @@ from ..message.envelope import Envelope
 from ..message.acl import AclMessage
 from ..message.aid import AgentIdentifier
 from . import df_manager
-from .. import content as content_utils
+from . import content as content_utils
 from ..sl import sl0
 
 

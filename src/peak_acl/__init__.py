@@ -22,7 +22,7 @@ from importlib.metadata import version as _version, PackageNotFoundError
 # --------------------------------------------------------------------------- #
 from .parser import parse
 from .message.acl import AclMessage
-from .serialize import dumps
+from .message.serialize import dumps
 
 __all__: list[str] = ["parse", "AclMessage", "dumps", "__version__"]
 

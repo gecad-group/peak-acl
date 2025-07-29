@@ -18,7 +18,7 @@ from ..generated.ACLVisitor import ACLVisitor
 from ..generated.ACLParser import ACLParser
 
 from ..message.acl import AclMessage
-from ..types import QuotedStr  # keep compatibility
+from .types import QuotedStr  # keep compatibility
 from .parse_helpers import to_aid, to_aid_list, to_datetime
 
 
