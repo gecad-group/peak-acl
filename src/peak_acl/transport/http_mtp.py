@@ -186,7 +186,7 @@ class HttpMtpServer:
     ----------
     on_message :
         Optional async callback ``(env: Envelope, acl: AclMessage) -> Awaitable[None]``.
-        If ``None``, messages are queued into :pyattr:`inbox`.
+        If ``None``, messages are queued into :py:attr:`inbox`.
     client_max_size :
         Max accepted request size in bytes (default: 5 MiB).
     loop :

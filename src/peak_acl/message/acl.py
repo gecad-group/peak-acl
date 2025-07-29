@@ -107,16 +107,16 @@ class AclMessage:
     # Convenience helpers
     # ------------------------------------------------------------------ #
     def add_receiver(self, aid: AgentIdentifier) -> None:
-        """Append *aid* to :pyattr:`receivers`."""
+        """Append *aid* to :py:attr:`receivers`."""
         self.receivers.append(aid)
 
     def add_reply_to(self, aid: AgentIdentifier) -> None:
-        """Append *aid* to :pyattr:`reply_to`."""
+        """Append *aid* to :py:attr:`reply_to`."""
         self.reply_to.append(aid)
 
     @property
     def performative_upper(self) -> str:
-        """Return :pyattr:`performative` normalized per FIPA rules."""
+        """Return :py:attr:`performative` normalized per FIPA rules."""
         return _norm_performative(self.performative)
 
     # ------------------------------------------------------------------ #
