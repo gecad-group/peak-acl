@@ -3,19 +3,18 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-peak-acl documentation
+peak-acl Documentation
 ======================
 
-
-This site contains the API reference generated from the source code. For usage
-examples and a full introduction see the project's ``README``.
+This site hosts the API reference generated from the source code. For
+usage examples and a full introduction see the project's ``README``.
 
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: API Reference
 
-modules
+   modules
 
 Indices and tables
 ==================

@@ -154,10 +154,12 @@ It also supports optional timeouts.
 ---
 
 ## Documentation
-HTML API documentation is generated with **Sphinx**. To build it locally:
+HTML API documentation is generated with **Sphinx** using the
+[`furo`](https://github.com/pradyunsg/furo) theme. Install the optional
+documentation dependencies and build it locally:
 
 ```bash
-pip install sphinx
+pip install -e .[docs]
 make -C docs html
 ```
 
