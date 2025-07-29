@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>peak_acl package &#8212; peak-acl  documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=5ecbeea2" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css?v=12dfc556" />
+    <script src="_static/documentation_options.js?v=5929fcd5"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="peak-acl-package">
+<h1>peak_acl package<a class="headerlink" href="#peak-acl-package" title="Link to this heading">¶</a></h1>
+<section id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-peak_acl.content">
+<span id="peak-acl-content-module"></span><h2>peak_acl.content module<a class="headerlink" href="#module-peak_acl.content" title="Link to this heading">¶</a></h2>
+<p>Helpers to decode the ACL <code class="docutils literal notranslate"><span class="pre">content</span></code> slot according to the declared language
+(e.g., <code class="docutils literal notranslate"><span class="pre">language</span> <span class="pre">=</span> <span class="pre">&quot;fipa-sl...&quot;</span></code>).</p>
+<dl class="simple">
+<dt>Decoding order:</dt><dd><ol class="arabic simple">
+<li><p>Full FIPA-SL grammar (ANTLR)  → rich AST (SLSentence, …)</p></li>
+<li><p>Ad-hoc SL0 implementation     → <code class="docutils literal notranslate"><span class="pre">sl0.*</span></code> dataclasses</p></li>
+<li><p>Original string/bytes/object  → fallback (no decoding)</p></li>
+</ol>
+</dd>
+</dl>
+<section id="public-api">
+<h3>Public API<a class="headerlink" href="#public-api" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#peak_acl.content.decode_content" title="peak_acl.content.decode_content"><code class="xref py py-func docutils literal notranslate"><span class="pre">decode_content()</span></code></a></p></li>
+</ul>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.content.decode_content">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.content.</span></span><span class="sig-name descname"><span class="pre">decode_content</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.content.decode_content" title="Link to this definition">¶</a></dt>
+<dd><p>Return the decoded payload based on the message’s <code class="docutils literal notranslate"><span class="pre">language</span></code> slot.</p>
+<p>The function inspects <code class="docutils literal notranslate"><span class="pre">msg.language</span></code> and, if it starts with <code class="docutils literal notranslate"><span class="pre">&quot;fipa-sl&quot;</span></code>,
+tries to parse the content as follows:</p>
+<ol class="arabic simple">
+<li><p><strong>Full FIPA-SL via ANTLR</strong> – returns the AST created by <code class="docutils literal notranslate"><span class="pre">build_ast</span></code>.</p></li>
+<li><p><strong>SL0 compatibility layer</strong> – returns objects from <code class="docutils literal notranslate"><span class="pre">sl0</span></code> module.</p></li>
+<li><p><strong>Fallback</strong> – returns the original <code class="docutils literal notranslate"><span class="pre">msg.content</span></code> unchanged.</p></li>
+</ol>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>) – ACL message whose <code class="docutils literal notranslate"><span class="pre">content</span></code> and <code class="docutils literal notranslate"><span class="pre">language</span></code> fields are inspected.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed AST/object or the original content value.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Any parsing error is swallowed intentionally; the next strategy is tried.</p></li>
+<li><p>If <code class="docutils literal notranslate"><span class="pre">content</span></code> is not a <code class="docutils literal notranslate"><span class="pre">str</span></code> or the language is not SL, the original
+value is returned unchanged.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.conversation">
+<span id="peak-acl-conversation-module"></span><h2>peak_acl.conversation module<a class="headerlink" href="#module-peak_acl.conversation" title="Link to this heading">¶</a></h2>
+<p>Conversation Manager – FIPA Request-like</p>
+<p>Creates and tracks request-style conversations:</p>
+<ul class="simple">
+<li><p>Build with <code class="docutils literal notranslate"><span class="pre">send_request()</span></code></p></li>
+<li><p>Keeps a map: <code class="docutils literal notranslate"><span class="pre">conversation_id</span> <span class="pre">-&gt;</span> <span class="pre">_Conversation</span></code></p></li>
+<li><p>Update state by calling <code class="xref py py-meth docutils literal notranslate"><span class="pre">on_message()</span></code> for every inbound ACL</p></li>
+<li><p>Returns futures/callbacks that agents can <code class="docutils literal notranslate"><span class="pre">await</span></code></p></li>
+</ul>
+<dl class="simple">
+<dt>Supported flow:</dt><dd><p>REQUEST → {AGREE | REFUSE} → {INFORM | FAILURE}</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.conversation.ConversationManager">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.conversation.</span></span><span class="sig-name descname"><span class="pre">ConversationManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">send_fn</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.conversation.ConversationManager" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Lightweight manager for the FIPA-Request interaction protocol.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>send_fn</strong> (<em>Callable</em><em>[</em><em>[</em><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage"><em>AclMessage</em></a><em>, </em><em>str</em><em>]</em><em>, </em><em>Awaitable</em><em>[</em><em>None</em><em>]</em><em>]</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.conversation.ConversationManager.on_message">
+<span class="sig-name descname"><span class="pre">on_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acl</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.conversation.ConversationManager.on_message" title="Link to this definition">¶</a></dt>
+<dd><p>Feed every inbound ACL here; ignores unrelated conversations.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>acl</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>) – Incoming message to be matched against tracked conversations.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.conversation.ConversationManager.send_request">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">send_request</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receiver</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fipa-sl0'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontology</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'default'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'fipa-request'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.conversation.ConversationManager.send_request" title="Link to this definition">¶</a></dt>
+<dd><p>Send a REQUEST and return a Future resolving to INFORM/FAILURE.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sender</strong> (<em>AgentIdentifier</em>) – Agent identifiers for ACL <code class="docutils literal notranslate"><span class="pre">sender</span></code> / <code class="docutils literal notranslate"><span class="pre">receivers</span></code> slots.</p></li>
+<li><p><strong>receiver</strong> (<em>AgentIdentifier</em>) – Agent identifiers for ACL <code class="docutils literal notranslate"><span class="pre">sender</span></code> / <code class="docutils literal notranslate"><span class="pre">receivers</span></code> slots.</p></li>
+<li><p><strong>content</strong> – Either a raw string or an SL0 object (serialized if not str).</p></li>
+<li><p><strong>language</strong> (<em>str</em>) – ACL meta fields (defaults target FIPA-Request + SL0).</p></li>
+<li><p><strong>ontology</strong> (<em>str</em>) – ACL meta fields (defaults target FIPA-Request + SL0).</p></li>
+<li><p><strong>protocol</strong> (<em>str</em>) – ACL meta fields (defaults target FIPA-Request + SL0).</p></li>
+<li><p><strong>url</strong> (<em>str</em><em> | </em><em>None</em>) – Transport destination, passed to <code class="docutils literal notranslate"><span class="pre">send_fn</span></code>.</p></li>
+<li><p><strong>timeout</strong> (<em>float</em><em> | </em><em>None</em>) – Optional seconds to auto-timeout the conversation; if elapsed,
+the future is completed with <code class="docutils literal notranslate"><span class="pre">asyncio.TimeoutError</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Await to get the final reply message (<code class="docutils literal notranslate"><span class="pre">INFORM</span></code> or <code class="docutils literal notranslate"><span class="pre">FAILURE</span></code>).
+If the first reply is <code class="docutils literal notranslate"><span class="pre">REFUSE</span></code>, the future resolves immediately
+with that message.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>asyncio.Future</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Conversation ID is generated via <cite>_gen_conv_id()</cite>.</p></li>
+<li><p>The future is stored in <code class="docutils literal notranslate"><span class="pre">_convs</span></code> until completion or timeout.</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.df_manager">
+<span id="peak-acl-df-manager-module"></span><h2>peak_acl.df_manager module<a class="headerlink" href="#module-peak_acl.df_manager" title="Link to this heading">¶</a></h2>
+<p>Helpers to interact with a FIPA Directory Facilitator (DF).</p>
+<section id="id1">
+<h3>Public API<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#peak_acl.df_manager.register" title="peak_acl.df_manager.register"><code class="xref py py-func docutils literal notranslate"><span class="pre">register()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#peak_acl.df_manager.deregister" title="peak_acl.df_manager.deregister"><code class="xref py py-func docutils literal notranslate"><span class="pre">deregister()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#peak_acl.df_manager.search_services" title="peak_acl.df_manager.search_services"><code class="xref py py-func docutils literal notranslate"><span class="pre">search_services()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#peak_acl.df_manager.decode_df_reply" title="peak_acl.df_manager.decode_df_reply"><code class="xref py py-func docutils literal notranslate"><span class="pre">decode_df_reply()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#peak_acl.df_manager.is_df_done_msg" title="peak_acl.df_manager.is_df_done_msg"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_df_done_msg()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#peak_acl.df_manager.is_df_failure_msg" title="peak_acl.df_manager.is_df_failure_msg"><code class="xref py py-func docutils literal notranslate"><span class="pre">is_df_failure_msg()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#peak_acl.df_manager.extract_search_results" title="peak_acl.df_manager.extract_search_results"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_search_results()</span></code></a></p></li>
+</ul>
+<p>The module builds SL0/FIPA-AM compliant payloads, sends them via an
+<code class="xref py py-class docutils literal notranslate"><span class="pre">HttpMtpClient</span></code>, and provides utilities to decode DF replies.</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.df_manager.decode_df_reply">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.df_manager.</span></span><span class="sig-name descname"><span class="pre">decode_df_reply</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.df_manager.decode_df_reply" title="Link to this definition">¶</a></dt>
+<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">msg.content</span></code> into SL0 AST/data, unwrapping ContentElementList.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Parsed object(s) or the raw payload if decoding fails.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#peak_acl.sl0.Done" title="peak_acl.sl0.Done">sl0.Done</a> | <a class="reference internal" href="#peak_acl.sl0.Failure" title="peak_acl.sl0.Failure">sl0.Failure</a> | list[<a class="reference internal" href="#peak_acl.fipa_am.AgentDescription" title="peak_acl.fipa_am.AgentDescription">AgentDescription</a>] | Any</p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.df_manager.deregister">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.df_manager.</span></span><span class="sig-name descname"><span class="pre">deregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">my_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.df_manager.deregister" title="Link to this definition">¶</a></dt>
+<dd><p>Send a DF DEREGISTER request and return the request message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>my_aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>df_aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>http_client</strong> (<em>HttpMtpClient</em>)</p></li>
+<li><p><strong>df_url</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.df_manager.extract_search_results">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.df_manager.</span></span><span class="sig-name descname"><span class="pre">extract_search_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.df_manager.extract_search_results" title="Link to this definition">¶</a></dt>
+<dd><p>If <code class="docutils literal notranslate"><span class="pre">msg</span></code> is a DF search result, return a list of AgentDescription.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[<a class="reference internal" href="#peak_acl.fipa_am.AgentDescription" title="peak_acl.fipa_am.AgentDescription"><em>AgentDescription</em></a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.df_manager.is_df_done_msg">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.df_manager.</span></span><span class="sig-name descname"><span class="pre">is_df_done_msg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.df_manager.is_df_done_msg" title="Link to this definition">¶</a></dt>
+<dd><p>Return True if the DF reply decodes to an <code class="docutils literal notranslate"><span class="pre">sl0.Done</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.df_manager.is_df_failure_msg">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.df_manager.</span></span><span class="sig-name descname"><span class="pre">is_df_failure_msg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.df_manager.is_df_failure_msg" title="Link to this definition">¶</a></dt>
+<dd><p>Return True if the DF reply decodes to an <code class="docutils literal notranslate"><span class="pre">sl0.Failure</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.df_manager.register">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.df_manager.</span></span><span class="sig-name descname"><span class="pre">register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">my_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">languages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontologies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ownership</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.df_manager.register" title="Link to this definition">¶</a></dt>
+<dd><p>Send a DF REGISTER request and return the request message.</p>
+<p>Parameters mirror FIPA-AM fields; tuples <code class="docutils literal notranslate"><span class="pre">(name,</span> <span class="pre">type)</span></code> are coerced into
+<code class="xref py py-class docutils literal notranslate"><span class="pre">ServiceDescription</span></code> objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>my_aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>df_aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>services</strong> (<em>Iterable</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>] </em><em>| </em><a class="reference internal" href="#peak_acl.fipa_am.ServiceDescription" title="peak_acl.fipa_am.ServiceDescription"><em>ServiceDescription</em></a><em>]</em>)</p></li>
+<li><p><strong>languages</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ontologies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>protocols</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ownership</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>http_client</strong> (<em>HttpMtpClient</em>)</p></li>
+<li><p><strong>df_url</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.df_manager.search_services">
+<em class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.df_manager.</span></span><span class="sig-name descname"><span class="pre">search_services</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">my_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">service_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_results</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">http_client</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_url</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.df_manager.search_services" title="Link to this definition">¶</a></dt>
+<dd><p>Send a DF SEARCH request.</p>
+<p>JADE always requires the <code class="docutils literal notranslate"><span class="pre">:constraints</span></code> slot, so we include
+<code class="docutils literal notranslate"><span class="pre">(search-constraints</span> <span class="pre">:max-results</span> <span class="pre">X)</span></code>. If <code class="docutils literal notranslate"><span class="pre">max_results</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+use <code class="docutils literal notranslate"><span class="pre">-1</span></code> (unlimited).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>my_aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>df_aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>service_name</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>service_type</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>max_results</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>http_client</strong> (<em>HttpMtpClient</em>)</p></li>
+<li><p><strong>df_url</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.dispatcher">
+<span id="peak-acl-dispatcher-module"></span><h2>peak_acl.dispatcher module<a class="headerlink" href="#module-peak_acl.dispatcher" title="Link to this heading">¶</a></h2>
+<p>InboundDispatcher – routes inbound ACL messages to callbacks registered
+with a <code class="xref py py-class docutils literal notranslate"><span class="pre">MessageTemplate</span></code>.</p>
+<p>It stores (template, callback) pairs and, on dispatch, finds the first match,
+schedules the callback with <code class="docutils literal notranslate"><span class="pre">asyncio.create_task</span></code> and returns <code class="docutils literal notranslate"><span class="pre">True</span></code>.
+If nothing matches, it returns <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.dispatcher.InboundDispatcher">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.dispatcher.</span></span><span class="sig-name descname"><span class="pre">InboundDispatcher</span></span><a class="headerlink" href="#peak_acl.dispatcher.InboundDispatcher" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Simple rule-based dispatcher for inbound ACL messages.</p>
+<dl class="field-list simple">
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.dispatcher.InboundDispatcher.add">
+<span class="sig-name descname"><span class="pre">add</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tmpl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cb</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.dispatcher.InboundDispatcher.add" title="Link to this definition">¶</a></dt>
+<dd><p>Register a new handler rule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tmpl</strong> (<a class="reference internal" href="#peak_acl.message_template.MessageTemplate" title="peak_acl.message_template.MessageTemplate"><em>MessageTemplate</em></a>)</p></li>
+<li><p><strong>cb</strong> (<em>Callable</em><em>[</em><em>[</em><em>AgentIdentifier</em><em>, </em><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a><em>]</em><em>, </em><em>Awaitable</em><em>[</em><em>None</em><em>]</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.dispatcher.InboundDispatcher.dispatch">
+<em class="property"><span class="pre">async</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dispatch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acl</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.dispatcher.InboundDispatcher.dispatch" title="Link to this definition">¶</a></dt>
+<dd><p>Match the first template and schedule its callback.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sender</strong> (<em>AgentIdentifier</em>) – Sender AID (extracted upstream).</p></li>
+<li><p><strong>acl</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>) – Inbound ACL message.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> if a rule matched (callback scheduled), else <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Callbacks run in background tasks; exceptions inside them will be
+logged only if the callback handles them or the event loop has a
+task exception handler.</p></li>
+<li><p>Rule order matters: the first matching template is chosen.</p></li>
+</ul>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.event">
+<span id="peak-acl-event-module"></span><h2>peak_acl.event module<a class="headerlink" href="#module-peak_acl.event" title="Link to this heading">¶</a></h2>
+<section id="peak-acl-events">
+<h3>peak_acl.events<a class="headerlink" href="#peak-acl-events" title="Link to this heading">¶</a></h3>
+<p>High-level structures for routing inbound HTTP-MTP messages.</p>
+<p>End users (agents) only deal with <a class="reference internal" href="#peak_acl.event.MsgEvent" title="peak_acl.event.MsgEvent"><code class="xref py py-class docutils literal notranslate"><span class="pre">MsgEvent</span></code></a>, which bundles the original
+<code class="docutils literal notranslate"><span class="pre">Envelope</span></code> and <code class="docutils literal notranslate"><span class="pre">AclMessage</span></code> plus a classified <code class="docutils literal notranslate"><span class="pre">kind</span></code> and a decoded
+<code class="docutils literal notranslate"><span class="pre">payload</span></code>.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.event.MsgEvent">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.event.</span></span><span class="sig-name descname"><span class="pre">MsgEvent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">env</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sender</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kind</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">payload</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.event.MsgEvent" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Runtime-classified message wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>env</strong> (<em>Envelope</em>)</p></li>
+<li><p><strong>acl</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>)</p></li>
+<li><p><strong>sender</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>kind</strong> (<em>Literal</em><em>[</em><em>'df'</em><em>, </em><em>'df-done'</em><em>, </em><em>'df-failure'</em><em>, </em><em>'df-result'</em><em>, </em><em>'df-not-understood'</em><em>, </em><em>'ext-sl0'</em><em>, </em><em>'ext-raw'</em><em>]</em>)</p></li>
+<li><p><strong>payload</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.event.MsgEvent.env">
+<span class="sig-name descname"><span class="pre">env</span></span><a class="headerlink" href="#peak_acl.event.MsgEvent.env" title="Link to this definition">¶</a></dt>
+<dd><p>Original transport envelope (sender/receiver, date, etc.).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>peak_acl.message.envelope.Envelope</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.event.MsgEvent.acl">
+<span class="sig-name descname"><span class="pre">acl</span></span><a class="headerlink" href="#peak_acl.event.MsgEvent.acl" title="Link to this definition">¶</a></dt>
+<dd><p>Parsed ACL message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage">peak_acl.message.acl.AclMessage</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.event.MsgEvent.sender">
+<span class="sig-name descname"><span class="pre">sender</span></span><a class="headerlink" href="#peak_acl.event.MsgEvent.sender" title="Link to this definition">¶</a></dt>
+<dd><p>Convenience alias for <code class="docutils literal notranslate"><span class="pre">env.from_</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>peak_acl.message.aid.AgentIdentifier</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.event.MsgEvent.kind">
+<span class="sig-name descname"><span class="pre">kind</span></span><a class="headerlink" href="#peak_acl.event.MsgEvent.kind" title="Link to this definition">¶</a></dt>
+<dd><p>Classification label (see <code class="xref py py-data docutils literal notranslate"><span class="pre">Kind</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Literal[‘df’, ‘df-done’, ‘df-failure’, ‘df-result’, ‘df-not-understood’, ‘ext-sl0’, ‘ext-raw’]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.event.MsgEvent.payload">
+<span class="sig-name descname"><span class="pre">payload</span></span><a class="headerlink" href="#peak_acl.event.MsgEvent.payload" title="Link to this definition">¶</a></dt>
+<dd><p>Decoded payload (e.g., <code class="docutils literal notranslate"><span class="pre">Done</span></code> / <code class="docutils literal notranslate"><span class="pre">Failure</span></code> / list of ADs / raw str).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<p>Additional helpers (e.g., <code class="docutils literal notranslate"><span class="pre">reply()</span></code>) can be added later without breaking
+existing code that treats this as a simple data container.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">acl</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><span class="pre">AclMessage</span></a></em><a class="headerlink" href="#id0" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id2">
+<span class="sig-name descname"><span class="pre">env</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Envelope</span></em><a class="headerlink" href="#id2" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id3">
+<span class="sig-name descname"><span class="pre">kind</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'df'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'df-done'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'df-failure'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'df-result'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'df-not-understood'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ext-sl0'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'ext-raw'</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id3" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">payload</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#id4" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">sender</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">AgentIdentifier</span></em><a class="headerlink" href="#id5" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.fipa_am">
+<span id="peak-acl-fipa-am-module"></span><h2>peak_acl.fipa_am module<a class="headerlink" href="#module-peak_acl.fipa_am" title="Link to this heading">¶</a></h2>
+<p>Python objects for the FIPA Agent Management ontology (FIPA-AM) and helpers to
+serialize/deserialize them to/from the SL0 subset handled by <code class="docutils literal notranslate"><span class="pre">peak_acl.sl0</span></code>.</p>
+<p>This is a convenience layer on top of the <code class="docutils literal notranslate"><span class="pre">sl0</span></code> module.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.AgentDescription">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.fipa_am.</span></span><span class="sig-name descname"><span class="pre">AgentDescription</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">languages=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontologies=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocols=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ownership=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.fipa_am.AgentDescription" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Agent descriptor (wrapper around an <code class="xref py py-class docutils literal notranslate"><span class="pre">AgentIdentifier</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>AgentIdentifier</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>languages</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ontologies</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>protocols</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ownership</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>services</strong> (<em>List</em><em>[</em><a class="reference internal" href="#peak_acl.fipa_am.ServiceDescription" title="peak_acl.fipa_am.ServiceDescription"><em>ServiceDescription</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.AgentDescription.languages">
+<span class="sig-name descname"><span class="pre">languages</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.fipa_am.AgentDescription.languages" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.AgentDescription.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">AgentIdentifier</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.fipa_am.AgentDescription.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.AgentDescription.ontologies">
+<span class="sig-name descname"><span class="pre">ontologies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.fipa_am.AgentDescription.ontologies" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.AgentDescription.ownership">
+<span class="sig-name descname"><span class="pre">ownership</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.fipa_am.AgentDescription.ownership" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.AgentDescription.protocols">
+<span class="sig-name descname"><span class="pre">protocols</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.fipa_am.AgentDescription.protocols" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.AgentDescription.services">
+<span class="sig-name descname"><span class="pre">services</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#peak_acl.fipa_am.ServiceDescription" title="peak_acl.fipa_am.ServiceDescription"><span class="pre">ServiceDescription</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.fipa_am.AgentDescription.services" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.Property">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.fipa_am.</span></span><span class="sig-name descname"><span class="pre">Property</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.fipa_am.Property" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Simple name/value pair used inside <a class="reference internal" href="#peak_acl.fipa_am.ServiceDescription" title="peak_acl.fipa_am.ServiceDescription"><code class="xref py py-class docutils literal notranslate"><span class="pre">ServiceDescription</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>value</strong> (<em>str</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.Property.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#peak_acl.fipa_am.Property.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.Property.value">
+<span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#peak_acl.fipa_am.Property.value" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.ServiceDescription">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.fipa_am.</span></span><span class="sig-name descname"><span class="pre">ServiceDescription</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">languages=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontologies=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocols=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.fipa_am.ServiceDescription" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Service descriptor in FIPA-AM terms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>type</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>languages</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ontologies</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>protocols</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>properties</strong> (<em>List</em><em>[</em><a class="reference internal" href="#peak_acl.fipa_am.Property" title="peak_acl.fipa_am.Property"><em>Property</em></a><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.ServiceDescription.languages">
+<span class="sig-name descname"><span class="pre">languages</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.fipa_am.ServiceDescription.languages" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.ServiceDescription.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.fipa_am.ServiceDescription.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.ServiceDescription.ontologies">
+<span class="sig-name descname"><span class="pre">ontologies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.fipa_am.ServiceDescription.ontologies" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.ServiceDescription.properties">
+<span class="sig-name descname"><span class="pre">properties</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#peak_acl.fipa_am.Property" title="peak_acl.fipa_am.Property"><span class="pre">Property</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.fipa_am.ServiceDescription.properties" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.ServiceDescription.protocols">
+<span class="sig-name descname"><span class="pre">protocols</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.fipa_am.ServiceDescription.protocols" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.ServiceDescription.type">
+<span class="sig-name descname"><span class="pre">type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.fipa_am.ServiceDescription.type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.build_agent_description">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.fipa_am.</span></span><span class="sig-name descname"><span class="pre">build_agent_description</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">languages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontologies</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ownership</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.fipa_am.build_agent_description" title="Link to this definition">¶</a></dt>
+<dd><p>Create an <a class="reference internal" href="#peak_acl.fipa_am.AgentDescription" title="peak_acl.fipa_am.AgentDescription"><code class="xref py py-class docutils literal notranslate"><span class="pre">AgentDescription</span></code></a> from simple sequences.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>services</strong> (<em>Sequence</em><em>[</em><a class="reference internal" href="#peak_acl.fipa_am.ServiceDescription" title="peak_acl.fipa_am.ServiceDescription"><em>ServiceDescription</em></a><em>]</em>)</p></li>
+<li><p><strong>languages</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ontologies</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>protocols</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ownership</strong> (<em>Sequence</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#peak_acl.fipa_am.AgentDescription" title="peak_acl.fipa_am.AgentDescription"><em>AgentDescription</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.from_sl0">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.fipa_am.</span></span><span class="sig-name descname"><span class="pre">from_sl0</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.fipa_am.from_sl0" title="Link to this definition">¶</a></dt>
+<dd><p>Convert an SL0 AST node (DfAgentDescription, Result, etc.) into the
+corresponding high-level dataclasses when applicable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Converted object(s) or the original <code class="docutils literal notranslate"><span class="pre">obj</span></code> if no conversion applied.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#peak_acl.fipa_am.AgentDescription" title="peak_acl.fipa_am.AgentDescription">AgentDescription</a> | <a class="reference internal" href="#peak_acl.fipa_am.ServiceDescription" title="peak_acl.fipa_am.ServiceDescription">ServiceDescription</a> | list[<a class="reference internal" href="#peak_acl.fipa_am.AgentDescription" title="peak_acl.fipa_am.AgentDescription">AgentDescription</a>] | Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.fipa_am.render_register_content">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.fipa_am.</span></span><span class="sig-name descname"><span class="pre">render_register_content</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">df_aid</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">agent_desc</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.fipa_am.render_register_content" title="Link to this definition">¶</a></dt>
+<dd><p>Build an SL0 string <em>without quotes</em> and <em>without outer parentheses</em>; the
+ACL serializer will wrap it in a ContentElementList.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Serialized SL0 action for <code class="docutils literal notranslate"><span class="pre">(register</span> <span class="pre">...)</span></code>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df_aid</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>agent_desc</strong> (<a class="reference internal" href="#peak_acl.fipa_am.AgentDescription" title="peak_acl.fipa_am.AgentDescription"><em>AgentDescription</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.message_template">
+<span id="peak-acl-message-template-module"></span><h2>peak_acl.message_template module<a class="headerlink" href="#module-peak_acl.message_template" title="Link to this heading">¶</a></h2>
+<p>MessageTemplate – simple JADE-like filter for ACL messages.</p>
+<p>Allows matching over <code class="docutils literal notranslate"><span class="pre">performative</span></code>, <code class="docutils literal notranslate"><span class="pre">protocol</span></code> and <code class="docutils literal notranslate"><span class="pre">ontology</span></code> fields.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.message_template.MessageTemplate">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.message_template.</span></span><span class="sig-name descname"><span class="pre">MessageTemplate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">performative</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocol</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontology</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.message_template.MessageTemplate" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Lightweight predicate for filtering <code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code> objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>performative</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Target performative (case-insensitive). Stored uppercased.</p></li>
+<li><p><strong>protocol</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Target protocol string (case-insensitive). Stored lowercased.</p></li>
+<li><p><strong>ontology</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Target ontology string (case-insensitive). Stored lowercased.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Uses <code class="docutils literal notranslate"><span class="pre">__slots__</span></code> to avoid per-instance <code class="docutils literal notranslate"><span class="pre">__dict__</span></code> (slightly lighter).</p></li>
+<li><p>Only fields explicitly provided are checked; missing ones are ignored.</p></li>
+</ul>
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.message_template.MessageTemplate.match">
+<span class="sig-name descname"><span class="pre">match</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">acl</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.message_template.MessageTemplate.match" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if <em>acl</em> matches all defined template fields.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>acl</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.message_template.MessageTemplate.ontology">
+<span class="sig-name descname"><span class="pre">ontology</span></span><a class="headerlink" href="#peak_acl.message_template.MessageTemplate.ontology" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.message_template.MessageTemplate.performative">
+<span class="sig-name descname"><span class="pre">performative</span></span><a class="headerlink" href="#peak_acl.message_template.MessageTemplate.performative" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.message_template.MessageTemplate.protocol">
+<span class="sig-name descname"><span class="pre">protocol</span></span><a class="headerlink" href="#peak_acl.message_template.MessageTemplate.protocol" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.parse">
+<span id="peak-acl-parse-module"></span><h2>peak_acl.parse module<a class="headerlink" href="#module-peak_acl.parse" title="Link to this heading">¶</a></h2>
+<p>ACL string → <code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code> parser using the generated ANTLR4 grammar.</p>
+<section id="id6">
+<h3>Public API<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#peak_acl.parse.parse" title="peak_acl.parse.parse"><code class="xref py py-func docutils literal notranslate"><span class="pre">parse()</span></code></a>  — parse a raw ACL string into an <code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code>.</p></li>
+</ul>
+<p>Raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> on syntax errors (tokenization or parsing).</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.parse.parse">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.parse.</span></span><span class="sig-name descname"><span class="pre">parse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.parse.parse" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a raw ACL string into a fully populated <code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>raw</strong> (<em>str</em>) – ACL text (FIPA/JADE syntax).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed message instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage">AclMessage</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If ANTLR reports one or more syntax errors.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">MessageBuilder</span></code> visits the parse tree and constructs the object graph.</p></li>
+<li><p>You can extend <code class="docutils literal notranslate"><span class="pre">MessageBuilder</span></code> to decode extra slots or user params.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.parse_helpers">
+<span id="peak-acl-parse-helpers-module"></span><h2>peak_acl.parse_helpers module<a class="headerlink" href="#module-peak_acl.parse_helpers" title="Link to this heading">¶</a></h2>
+<p>Auxiliary functions used by the ANTLR visitor to convert parsed values
+(Atoms, ListValue, NestedMessage) into FIPA-friendly structures:
+<code class="docutils literal notranslate"><span class="pre">AgentIdentifier</span></code>, lists of AIDs, <code class="docutils literal notranslate"><span class="pre">reply-by</span></code> datetimes, etc.</p>
+<section id="id7">
+<h3>Public API<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#peak_acl.parse_helpers.to_aid" title="peak_acl.parse_helpers.to_aid"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_aid()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#peak_acl.parse_helpers.to_aid_list" title="peak_acl.parse_helpers.to_aid_list"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_aid_list()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#peak_acl.parse_helpers.to_datetime" title="peak_acl.parse_helpers.to_datetime"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_datetime()</span></code></a></p></li>
+</ul>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.parse_helpers.to_aid">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.parse_helpers.</span></span><span class="sig-name descname"><span class="pre">to_aid</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.parse_helpers.to_aid" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a nested <code class="docutils literal notranslate"><span class="pre">(agent-identifier</span> <span class="pre">...)</span></code> ACL message to <code class="docutils literal notranslate"><span class="pre">AgentIdentifier</span></code>.</p>
+<p>Expected form (already parsed into an <code class="docutils literal notranslate"><span class="pre">AclMessage</span></code>):</p>
+<div class="highlight-lisp notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="nv">agent-identifier</span><span class="w"> </span><span class="ss">:name</span><span class="w"> </span><span class="nv">foo@host:port/JADE</span>
+<span class="w">                  </span><span class="ss">:addresses</span><span class="w"> </span><span class="p">(</span><span class="nc">sequence</span><span class="w"> </span><span class="nv">http://...</span><span class="w"> </span><span class="nv">http://...</span><span class="p">))</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>TypeError</strong> – If <em>value</em> is not an <code class="docutils literal notranslate"><span class="pre">AclMessage</span></code>.</p></li>
+<li><p><strong>ValueError</strong> – If the nested message is not <code class="docutils literal notranslate"><span class="pre">agent-identifier</span></code> or missing <code class="docutils literal notranslate"><span class="pre">:name</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Parameters<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>value</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><em>AgentIdentifier</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.parse_helpers.to_aid_list">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.parse_helpers.</span></span><span class="sig-name descname"><span class="pre">to_aid_list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.parse_helpers.to_aid_list" title="Link to this definition">¶</a></dt>
+<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">(set</span> <span class="pre">&lt;aid&gt;</span> <span class="pre">&lt;aid&gt;</span> <span class="pre">...)</span></code> or a single AID into a Python list.</p>
+<p>JADE tolerates a single AID without a <code class="docutils literal notranslate"><span class="pre">(set</span> <span class="pre">...)</span></code> wrapper.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>List</em>[<em>AgentIdentifier</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.parse_helpers.to_datetime">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.parse_helpers.</span></span><span class="sig-name descname"><span class="pre">to_datetime</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">v</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.parse_helpers.to_datetime" title="Link to this definition">¶</a></dt>
+<dd><p>Parse common FIPA/ISO date strings into <code class="docutils literal notranslate"><span class="pre">datetime</span></code> or return <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<p>JADE usually emits ISO-like formats, e.g. <code class="docutils literal notranslate"><span class="pre">20250715T103845</span></code> (or with <code class="docutils literal notranslate"><span class="pre">Z</span></code>).</p>
+<dl class="simple">
+<dt>Tried patterns (in order):</dt><dd><p><code class="docutils literal notranslate"><span class="pre">%Y%m%dT%H%M%S</span></code> • <code class="docutils literal notranslate"><span class="pre">%Y%m%dZ%H%M%S</span></code> • <code class="docutils literal notranslate"><span class="pre">%Y-%m-%dT%H:%M:%S</span></code> • <code class="docutils literal notranslate"><span class="pre">%Y%m%d</span></code></p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Parsed timezone-aware <code class="docutils literal notranslate"><span class="pre">datetime</span></code> (UTC) or <code class="docutils literal notranslate"><span class="pre">None</span></code> if parsing fails.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>datetime | None</p>
+</dd>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>v</strong> (<em>Any</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.router">
+<span id="peak-acl-router-module"></span><h2>peak_acl.router module<a class="headerlink" href="#module-peak_acl.router" title="Link to this heading">¶</a></h2>
+<p>Utility that classifies inbound messages into a <code class="docutils literal notranslate"><span class="pre">(kind,</span> <span class="pre">payload)</span></code> tuple,
+according to <code class="xref py py-data docutils literal notranslate"><span class="pre">peak_acl.event.Kind</span></code>.</p>
+<p>Centralizes logic to:
+* Distinguish DF vs. external senders
+* Decode SL0 payloads
+* Use <code class="xref py py-func docutils literal notranslate"><span class="pre">df_manager.decode_df_reply()</span></code> for DF replies</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.router.classify_message">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.router.</span></span><span class="sig-name descname"><span class="pre">classify_message</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">env</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acl</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df_aid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.router.classify_message" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">(kind,</span> <span class="pre">payload)</span></code> following the <code class="xref py py-data docutils literal notranslate"><span class="pre">Kind</span></code> table.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>env</strong> (<em>Envelope</em>) – Transport envelope (used to identify sender).</p></li>
+<li><p><strong>acl</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage"><em>AclMessage</em></a>) – The ACL message itself.</p></li>
+<li><p><strong>df_aid</strong> (<em>AgentIdentifier</em><em> | </em><em>None</em>) – Known DF identifier (or <code class="docutils literal notranslate"><span class="pre">None</span></code> if unknown). Matching is by <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Classification label plus decoded payload (or raw content fallback).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple[Kind, Any]</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>DF detection is name-based only; if multiple DFs or aliases exist, you
+may need a stronger check (e.g. address match).</p></li>
+<li><p>SL0 decoding errors yield <code class="docutils literal notranslate"><span class="pre">(&quot;ext-raw&quot;,</span> <span class="pre">&quot;...&quot;)</span></code> with a short message.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="peak-acl-runtime-module">
+<h2>peak_acl.runtime module<a class="headerlink" href="#peak-acl-runtime-module" title="Link to this heading">¶</a></h2>
+</section>
+<section id="module-peak_acl.serialize">
+<span id="peak-acl-serialize-module"></span><h2>peak_acl.serialize module<a class="headerlink" href="#module-peak_acl.serialize" title="Link to this heading">¶</a></h2>
+<p>Serialize <code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code> instances to JADE/FIPA-ACL compliant strings.</p>
+<section id="key-points">
+<h3>Key points<a class="headerlink" href="#key-points" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Builds the <code class="docutils literal notranslate"><span class="pre">(PERFORMATIVE</span> <span class="pre">...</span> <span class="pre">:slot</span> <span class="pre">value</span> <span class="pre">...)</span></code> syntax expected by JADE.</p></li>
+<li><p>Handles nested SL0 objects and even nested <code class="docutils literal notranslate"><span class="pre">AclMessage</span></code> instances.</p></li>
+<li><p>Includes a critical DF/JADE patch to wrap SL content with extra parentheses
+when needed (see comment in <a class="reference internal" href="#peak_acl.serialize.dumps" title="peak_acl.serialize.dumps"><code class="xref py py-func docutils literal notranslate"><span class="pre">dumps()</span></code></a>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">user_params</span></code> values are now escaped/quoted via <code class="docutils literal notranslate"><span class="pre">_quote_val</span></code> to avoid
+breaking the ACL syntax.</p></li>
+</ul>
+</section>
+<section id="id8">
+<h3>Public API<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#peak_acl.serialize.dumps" title="peak_acl.serialize.dumps"><code class="xref py py-func docutils literal notranslate"><span class="pre">dumps()</span></code></a></p></li>
+</ul>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.serialize.dumps">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.serialize.</span></span><span class="sig-name descname"><span class="pre">dumps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.serialize.dumps" title="Link to this definition">¶</a></dt>
+<dd><p>Serialize an <code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code> into a FIPA-ACL string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>) – Message instance to serialize.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>JADE/FIPA-ACL compliant textual representation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p><strong>CRITICAL PATCH for DF/JADE</strong>: if <code class="docutils literal notranslate"><span class="pre">language</span></code> starts with <code class="docutils literal notranslate"><span class="pre">&quot;fipa-sl&quot;</span></code>,
+ensure the content is wrapped in an extra pair of parentheses unless it
+already starts with <code class="docutils literal notranslate"><span class="pre">&quot;((&quot;</span></code>. This mirrors JADE’s expectations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">user_params</span></code> are escaped/quoted with <code class="docutils literal notranslate"><span class="pre">_quote_val</span></code> to keep output
+syntactically valid.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.sl0">
+<span id="peak-acl-sl0-module"></span><h2>peak_acl.sl0 module<a class="headerlink" href="#module-peak_acl.sl0" title="Link to this heading">¶</a></h2>
+<p>Mini implementation of FIPA-SL0 sufficient to talk to DF/AMS via JADE.</p>
+<section id="supported-forms">
+<h3>Supported forms<a class="headerlink" href="#supported-forms" title="Link to this heading">¶</a></h3>
+<dl class="simple">
+<dt>Requests:</dt><dd><p>(action &lt;aid&gt; (register|deregister|modify &lt;df-agent-description&gt;))
+(action &lt;aid&gt; (search &lt;df-agent-description&gt; [&lt;max-results&gt;]))</p>
+</dd>
+<dt>Replies:</dt><dd><p>(done &lt;expr&gt;)
+(failure &lt;expr&gt;)
+(result &lt;expr&gt; &lt;value&gt;)</p>
+</dd>
+</dl>
+<p>It also recognises <code class="docutils literal notranslate"><span class="pre">df-agent-description</span></code> and <code class="docutils literal notranslate"><span class="pre">service-description</span></code> nodes
+with optional fields (languages, ontologies, protocols, properties, …).</p>
+<p>Parsing is intentionally lenient: unknown slots are ignored.</p>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.Action">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">Action</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">actor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'AgentIdentifier'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">act</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Union[Register,</span> <span class="pre">Deregister,</span> <span class="pre">Modify,</span> <span class="pre">Search]'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.Action" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>actor</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>act</strong> (<a class="reference internal" href="#peak_acl.sl0.Register" title="peak_acl.sl0.Register"><em>Register</em></a><em> | </em><a class="reference internal" href="#peak_acl.sl0.Deregister" title="peak_acl.sl0.Deregister"><em>Deregister</em></a><em> | </em><a class="reference internal" href="#peak_acl.sl0.Modify" title="peak_acl.sl0.Modify"><em>Modify</em></a><em> | </em><a class="reference internal" href="#peak_acl.sl0.Search" title="peak_acl.sl0.Search"><em>Search</em></a>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Action.act">
+<span class="sig-name descname"><span class="pre">act</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.sl0.Register" title="peak_acl.sl0.Register"><span class="pre">Register</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.sl0.Deregister" title="peak_acl.sl0.Deregister"><span class="pre">Deregister</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.sl0.Modify" title="peak_acl.sl0.Modify"><span class="pre">Modify</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.sl0.Search" title="peak_acl.sl0.Search"><span class="pre">Search</span></a></em><a class="headerlink" href="#peak_acl.sl0.Action.act" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Action.actor">
+<span class="sig-name descname"><span class="pre">actor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">AgentIdentifier</span></em><a class="headerlink" href="#peak_acl.sl0.Action.actor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.Deregister">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">Deregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'DfAgentDescription'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.Deregister" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dfad</strong> (<a class="reference internal" href="#peak_acl.sl0.DfAgentDescription" title="peak_acl.sl0.DfAgentDescription"><em>DfAgentDescription</em></a>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Deregister.dfad">
+<span class="sig-name descname"><span class="pre">dfad</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.sl0.DfAgentDescription" title="peak_acl.sl0.DfAgentDescription"><span class="pre">DfAgentDescription</span></a></em><a class="headerlink" href="#peak_acl.sl0.Deregister.dfad" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.DfAgentDescription">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">DfAgentDescription</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">languages=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontologies=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocols=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ownership=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.DfAgentDescription" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SL0 <code class="docutils literal notranslate"><span class="pre">df-agent-description</span></code> node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>AgentIdentifier</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>services</strong> (<em>List</em><em>[</em><a class="reference internal" href="#peak_acl.sl0.ServiceDescription" title="peak_acl.sl0.ServiceDescription"><em>ServiceDescription</em></a><em>]</em>)</p></li>
+<li><p><strong>languages</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ontologies</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>protocols</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ownership</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.DfAgentDescription.languages">
+<span class="sig-name descname"><span class="pre">languages</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl0.DfAgentDescription.languages" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.DfAgentDescription.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">AgentIdentifier</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.sl0.DfAgentDescription.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.DfAgentDescription.ontologies">
+<span class="sig-name descname"><span class="pre">ontologies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl0.DfAgentDescription.ontologies" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.DfAgentDescription.ownership">
+<span class="sig-name descname"><span class="pre">ownership</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl0.DfAgentDescription.ownership" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.DfAgentDescription.protocols">
+<span class="sig-name descname"><span class="pre">protocols</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl0.DfAgentDescription.protocols" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.DfAgentDescription.services">
+<span class="sig-name descname"><span class="pre">services</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#peak_acl.sl0.ServiceDescription" title="peak_acl.sl0.ServiceDescription"><span class="pre">ServiceDescription</span></a><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl0.DfAgentDescription.services" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.Done">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">Done</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">what</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Any'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.Done" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>what</strong> (<em>Any</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Done.what">
+<span class="sig-name descname"><span class="pre">what</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#peak_acl.sl0.Done.what" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.Failure">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">Failure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">reason</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Any'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.Failure" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>reason</strong> (<em>Any</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Failure.reason">
+<span class="sig-name descname"><span class="pre">reason</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#peak_acl.sl0.Failure.reason" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.Modify">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">Modify</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'DfAgentDescription'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.Modify" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dfad</strong> (<a class="reference internal" href="#peak_acl.sl0.DfAgentDescription" title="peak_acl.sl0.DfAgentDescription"><em>DfAgentDescription</em></a>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Modify.dfad">
+<span class="sig-name descname"><span class="pre">dfad</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.sl0.DfAgentDescription" title="peak_acl.sl0.DfAgentDescription"><span class="pre">DfAgentDescription</span></a></em><a class="headerlink" href="#peak_acl.sl0.Modify.dfad" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.Register">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">Register</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dfad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'DfAgentDescription'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.Register" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dfad</strong> (<a class="reference internal" href="#peak_acl.sl0.DfAgentDescription" title="peak_acl.sl0.DfAgentDescription"><em>DfAgentDescription</em></a>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Register.dfad">
+<span class="sig-name descname"><span class="pre">dfad</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.sl0.DfAgentDescription" title="peak_acl.sl0.DfAgentDescription"><span class="pre">DfAgentDescription</span></a></em><a class="headerlink" href="#peak_acl.sl0.Register.dfad" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.Result">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">Result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">what</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Any'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Any'</span></span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.Result" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>what</strong> (<em>Any</em>)</p></li>
+<li><p><strong>value</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Result.value">
+<span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#peak_acl.sl0.Result.value" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Result.what">
+<span class="sig-name descname"><span class="pre">what</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#peak_acl.sl0.Result.what" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.Search">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">Search</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">template</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'DfAgentDescription'</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_results</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="s"><span class="pre">'Optional[int]'</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.Search" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>template</strong> (<a class="reference internal" href="#peak_acl.sl0.DfAgentDescription" title="peak_acl.sl0.DfAgentDescription"><em>DfAgentDescription</em></a>)</p></li>
+<li><p><strong>max_results</strong> (<em>int</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Search.max_results">
+<span class="sig-name descname"><span class="pre">max_results</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.sl0.Search.max_results" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.Search.template">
+<span class="sig-name descname"><span class="pre">template</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#peak_acl.sl0.DfAgentDescription" title="peak_acl.sl0.DfAgentDescription"><span class="pre">DfAgentDescription</span></a></em><a class="headerlink" href="#peak_acl.sl0.Search.template" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl0.ServiceDescription">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">ServiceDescription</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">type=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">languages=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontologies=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocols=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">properties=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.ServiceDescription" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>SL0 <code class="docutils literal notranslate"><span class="pre">service-description</span></code> node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>type</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>languages</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>ontologies</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>protocols</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>)</p></li>
+<li><p><strong>properties</strong> (<em>List</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.ServiceDescription.languages">
+<span class="sig-name descname"><span class="pre">languages</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl0.ServiceDescription.languages" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.ServiceDescription.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.sl0.ServiceDescription.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.ServiceDescription.ontologies">
+<span class="sig-name descname"><span class="pre">ontologies</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl0.ServiceDescription.ontologies" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.ServiceDescription.properties">
+<span class="sig-name descname"><span class="pre">properties</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl0.ServiceDescription.properties" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.ServiceDescription.protocols">
+<span class="sig-name descname"><span class="pre">protocols</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl0.ServiceDescription.protocols" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl0.ServiceDescription.type">
+<span class="sig-name descname"><span class="pre">type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.sl0.ServiceDescription.type" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl0.build_ast">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">build_ast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">e</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.build_ast" title="Link to this definition">¶</a></dt>
+<dd><p>Public wrapper around the internal AST builder (used by DF helpers).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>e</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl0.build_register_content">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">build_register_content</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">my</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">services</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.build_register_content" title="Link to this definition">¶</a></dt>
+<dd><p>Convenience builder for a REGISTER action payload (as SL0 string).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>my</strong> (<em>AgentIdentifier</em>)</p></li>
+<li><p><strong>services</strong> (<em>Sequence</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>)</p></li>
+<li><p><strong>df</strong> (<em>AgentIdentifier</em>)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl0.dumps">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">dumps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.dumps" title="Link to this definition">¶</a></dt>
+<dd><p>Serialize an SL0 AST node to a string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl0.is_done">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">is_done</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.is_done" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if <em>obj</em> is a <a class="reference internal" href="#peak_acl.sl0.Done" title="peak_acl.sl0.Done"><code class="xref py py-class docutils literal notranslate"><span class="pre">Done</span></code></a> node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl0.is_failure">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">is_failure</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.is_failure" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if <em>obj</em> is a <a class="reference internal" href="#peak_acl.sl0.Failure" title="peak_acl.sl0.Failure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Failure</span></code></a> node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl0.is_result">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">is_result</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">obj</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.is_result" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if <em>obj</em> is a <a class="reference internal" href="#peak_acl.sl0.Result" title="peak_acl.sl0.Result"><code class="xref py py-class docutils literal notranslate"><span class="pre">Result</span></code></a> node.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>obj</strong> (<em>Any</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl0.loads">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl0.</span></span><span class="sig-name descname"><span class="pre">loads</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl0.loads" title="Link to this definition">¶</a></dt>
+<dd><p>Parse an SL0 string into the corresponding AST objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>src</strong> (<em>str</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Any</em></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.sl_parser">
+<span id="peak-acl-sl-parser-module"></span><h2>peak_acl.sl_parser module<a class="headerlink" href="#module-peak_acl.sl_parser" title="Link to this heading">¶</a></h2>
+<p>FIPA-SL parser/serializer based on ANTLR 4.</p>
+<section id="id9">
+<h3>Public API<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#peak_acl.sl_parser.parse" title="peak_acl.sl_parser.parse"><code class="xref py py-func docutils literal notranslate"><span class="pre">parse()</span></code></a>  → returns the ANTLR parse tree (proof of concept)</p></li>
+<li><p><a class="reference internal" href="#peak_acl.sl_parser.dumps" title="peak_acl.sl_parser.dumps"><code class="xref py py-func docutils literal notranslate"><span class="pre">dumps()</span></code></a>  → extremely naive serializer (uses <code class="docutils literal notranslate"><span class="pre">getText()</span></code> if present)</p></li>
+</ul>
+<p>Currently we only expose the raw parse tree; you can later walk it with a
+visitor (e.g. <code class="xref py py-class docutils literal notranslate"><span class="pre">FipaSLVisitor</span></code>) to build richer Python objects/dataclasses.</p>
+</section>
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl_parser.dumps">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl_parser.</span></span><span class="sig-name descname"><span class="pre">dumps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_parser.dumps" title="Link to this definition">¶</a></dt>
+<dd><p>Very naive serializer: delegates to ANTLR’s <code class="docutils literal notranslate"><span class="pre">getText()</span></code> if available.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<ul class="simple">
+<li><p>Whitespace/comments are lost.</p></li>
+<li><p>Only suitable for simple round-trips; not a full pretty-printer.</p></li>
+</ul>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl_parser.parse">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl_parser.</span></span><span class="sig-name descname"><span class="pre">parse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_parser.parse" title="Link to this definition">¶</a></dt>
+<dd><p>Return the ANTLR parse tree for the given SL string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>) – FIPA-SL text to parse.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Root node of the parse tree (<code class="docutils literal notranslate"><span class="pre">msg</span></code> rule).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>antlr4.ParserRuleContext</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Thin wrapper: syntax errors are handled by ANTLR’s default listeners.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.sl_visitor">
+<span id="peak-acl-sl-visitor-module"></span><h2>peak_acl.sl_visitor module<a class="headerlink" href="#module-peak_acl.sl_visitor" title="Link to this heading">¶</a></h2>
+<p>Visitor that turns the ANTLR FIPA-SL parse tree into a lightweight Python AST
+(based on simple dataclasses).</p>
+<p>Extend this as you need more FIPA-SL constructs (quantifiers, logic ops, etc.).</p>
+<section id="id10">
+<h3>Public API<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference internal" href="#peak_acl.sl_visitor.build_ast" title="peak_acl.sl_visitor.build_ast"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_ast()</span></code></a> – convenience wrapper returning an <a class="reference internal" href="#peak_acl.sl_visitor.SLSentence" title="peak_acl.sl_visitor.SLSentence"><code class="xref py py-class docutils literal notranslate"><span class="pre">SLSentence</span></code></a></p></li>
+</ul>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl_visitor.</span></span><span class="sig-name descname"><span class="pre">ASTBuilder</span></span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">FipaSLVisitor</span></code></p>
+<p>Visit the parse tree and return an <a class="reference internal" href="#peak_acl.sl_visitor.SLSentence" title="peak_acl.sl_visitor.SLSentence"><code class="xref py py-class docutils literal notranslate"><span class="pre">SLSentence</span></code></a>.</p>
+<dl class="simple">
+<dt>Supported grammar fragments:</dt><dd><ul class="simple">
+<li><p>msg          → SLSentence</p></li>
+<li><p>performative → initial symbol</p></li>
+<li><p>slot         → ‘:’NAME term</p></li>
+<li><p>term         → string | number | var | func | action</p></li>
+</ul>
+</dd>
+</dl>
+<p>The FIPA-SL grammar is recursive; we only implement enough for common
+cases like <code class="docutils literal notranslate"><span class="pre">(inform</span> <span class="pre">:content</span> <span class="pre">&quot;...&quot;)</span></code> for now.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.aggregateResult">
+<span class="sig-name descname"><span class="pre">aggregateResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aggregate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nextResult</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.aggregateResult" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.defaultResult">
+<span class="sig-name descname"><span class="pre">defaultResult</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.defaultResult" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.visitActionExpr">
+<span class="sig-name descname"><span class="pre">visitActionExpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.visitActionExpr" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>FipaSLParser.ActionExprContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.visitFunctionExpr">
+<span class="sig-name descname"><span class="pre">visitFunctionExpr</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.visitFunctionExpr" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>FipaSLParser.FunctionExprContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.visitMsg">
+<span class="sig-name descname"><span class="pre">visitMsg</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.visitMsg" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>FipaSLParser.MsgContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.visitNumberLiteral">
+<span class="sig-name descname"><span class="pre">visitNumberLiteral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.visitNumberLiteral" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>FipaSLParser.NumberLiteralContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.visitSlot">
+<span class="sig-name descname"><span class="pre">visitSlot</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.visitSlot" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>FipaSLParser.SlotContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.visitStringLiteral">
+<span class="sig-name descname"><span class="pre">visitStringLiteral</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.visitStringLiteral" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>FipaSLParser.StringLiteralContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.visitTerm">
+<span class="sig-name descname"><span class="pre">visitTerm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.visitTerm" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>FipaSLParser.TermContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.ASTBuilder.visitVariable">
+<span class="sig-name descname"><span class="pre">visitVariable</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.ASTBuilder.visitVariable" title="Link to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>FipaSLParser.VariableContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLAction">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl_visitor.</span></span><span class="sig-name descname"><span class="pre">SLAction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">actor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inner</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.SLAction" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">(action</span> <span class="pre">actor</span> <span class="pre">inner)</span></code> construct.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>actor</strong> (<em>Any</em>)</p></li>
+<li><p><strong>inner</strong> (<em>Any</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLAction.actor">
+<span class="sig-name descname"><span class="pre">actor</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#peak_acl.sl_visitor.SLAction.actor" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLAction.inner">
+<span class="sig-name descname"><span class="pre">inner</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></em><a class="headerlink" href="#peak_acl.sl_visitor.SLAction.inner" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLFunc">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl_visitor.</span></span><span class="sig-name descname"><span class="pre">SLFunc</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.SLFunc" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Function application node: <code class="docutils literal notranslate"><span class="pre">(name</span> <span class="pre">arg1</span> <span class="pre">arg2</span> <span class="pre">...)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>name</strong> (<em>str</em>)</p></li>
+<li><p><strong>args</strong> (<em>List</em><em>[</em><em>Any</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLFunc.args">
+<span class="sig-name descname"><span class="pre">args</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl_visitor.SLFunc.args" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLFunc.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#peak_acl.sl_visitor.SLFunc.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLNumber">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl_visitor.</span></span><span class="sig-name descname"><span class="pre">SLNumber</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.SLNumber" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Numeric literal node (stored as float).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>value</strong> (<em>float</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLNumber.value">
+<span class="sig-name descname"><span class="pre">value</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">float</span></em><a class="headerlink" href="#peak_acl.sl_visitor.SLNumber.value" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLSentence">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl_visitor.</span></span><span class="sig-name descname"><span class="pre">SLSentence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">performative</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">slots=&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.SLSentence" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Top-level SL sentence: typically <code class="docutils literal notranslate"><span class="pre">(inform</span> <span class="pre">...)</span></code> / <code class="docutils literal notranslate"><span class="pre">(request</span> <span class="pre">...)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>performative</strong> (<em>str</em>)</p></li>
+<li><p><strong>slots</strong> (<em>List</em><em>[</em><em>Any</em><em>]</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLSentence.performative">
+<span class="sig-name descname"><span class="pre">performative</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#peak_acl.sl_visitor.SLSentence.performative" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLSentence.slots">
+<span class="sig-name descname"><span class="pre">slots</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#peak_acl.sl_visitor.SLSentence.slots" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLString">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl_visitor.</span></span><span class="sig-name descname"><span class="pre">SLString</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.SLString" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>String literal node (quotes removed).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>text</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLString.text">
+<span class="sig-name descname"><span class="pre">text</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#peak_acl.sl_visitor.SLString.text" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLVar">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.sl_visitor.</span></span><span class="sig-name descname"><span class="pre">SLVar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.SLVar" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Variable node (e.g., <code class="docutils literal notranslate"><span class="pre">?x</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.SLVar.name">
+<span class="sig-name descname"><span class="pre">name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#peak_acl.sl_visitor.SLVar.name" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.sl_visitor.build_ast">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.sl_visitor.</span></span><span class="sig-name descname"><span class="pre">build_ast</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tree</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.sl_visitor.build_ast" title="Link to this definition">¶</a></dt>
+<dd><p>Shortcut: take a parse tree and return the built AST (<a class="reference internal" href="#peak_acl.sl_visitor.SLSentence" title="peak_acl.sl_visitor.SLSentence"><code class="xref py py-class docutils literal notranslate"><span class="pre">SLSentence</span></code></a>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tree</strong> (<em>ParseTree</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.types">
+<span id="peak-acl-types-module"></span><h2>peak_acl.types module<a class="headerlink" href="#module-peak_acl.types" title="Link to this heading">¶</a></h2>
+<p>Lightweight marker type for strings that must remain quoted during serialization.</p>
+<p><code class="docutils literal notranslate"><span class="pre">QuotedStr</span></code> subclasses <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code> and is used by the serializer to
+distinguish values that originally came from an ACL STRING token and therefore
+need to keep quotes when emitted by <code class="docutils literal notranslate"><span class="pre">dumps()</span></code>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.types.QuotedStr">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.types.</span></span><span class="sig-name descname"><span class="pre">QuotedStr</span></span><a class="headerlink" href="#peak_acl.types.QuotedStr" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+<p>Marker for values parsed from STRING tokens that should stay quoted.</p>
+</dd></dl>
+
+</section>
+<section id="module-peak_acl.visitor">
+<span id="peak-acl-visitor-module"></span><h2>peak_acl.visitor module<a class="headerlink" href="#module-peak_acl.visitor" title="Link to this heading">¶</a></h2>
+<p>ANTLR visitor → <code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code> (full FIPA model).</p>
+<p>Walks the parse tree produced by <code class="docutils literal notranslate"><span class="pre">ACLParser</span></code> and builds an <code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code>
+instance. Nested messages (e.g., <code class="docutils literal notranslate"><span class="pre">agent-identifier</span></code> inside slots) are kept as
+generic <code class="docutils literal notranslate"><span class="pre">AclMessage</span></code> objects for later coercion by helper functions.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.visitor.MessageBuilder">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.visitor.</span></span><span class="sig-name descname"><span class="pre">MessageBuilder</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw_text</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.visitor.MessageBuilder" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ACLVisitor</span></code></p>
+<p>Visits the parse tree produced by <code class="docutils literal notranslate"><span class="pre">ACLParser</span></code> and builds a complete
+<code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code>.</p>
+<p>Uses <code class="docutils literal notranslate"><span class="pre">_depth</span></code> to distinguish the root message from nested ones
+(AIDs, actions, etc.): depth==1 → root.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>raw_text</strong> (<em>str</em>)</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.visitor.MessageBuilder.visitACLmessage">
+<span class="sig-name descname"><span class="pre">visitACLmessage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.visitor.MessageBuilder.visitACLmessage" title="Link to this definition">¶</a></dt>
+<dd><p>Build an <code class="docutils literal notranslate"><span class="pre">AclMessage</span></code> from the <code class="docutils literal notranslate"><span class="pre">ACLmessage</span></code> rule.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>ACLmessageContext</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.visitor.MessageBuilder.visitACLparam">
+<span class="sig-name descname"><span class="pre">visitACLparam</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.visitor.MessageBuilder.visitACLparam" title="Link to this definition">¶</a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">(name,</span> <span class="pre">value)</span></code> for a slot; leniency for unknown root slots.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>ACLparamContext</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><em>Tuple</em>[str, <em>Any</em>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.visitor.MessageBuilder.visitAtom">
+<span class="sig-name descname"><span class="pre">visitAtom</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.visitor.MessageBuilder.visitAtom" title="Link to this definition">¶</a></dt>
+<dd><p>Symbol atom → plain string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>AtomContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.visitor.MessageBuilder.visitListValue">
+<span class="sig-name descname"><span class="pre">visitListValue</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.visitor.MessageBuilder.visitListValue" title="Link to this definition">¶</a></dt>
+<dd><p>List of values → Python list.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>ListValueContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.visitor.MessageBuilder.visitNestedMessage">
+<span class="sig-name descname"><span class="pre">visitNestedMessage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.visitor.MessageBuilder.visitNestedMessage" title="Link to this definition">¶</a></dt>
+<dd><p>Nested ACL message → visit recursively.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>NestedMessageContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.visitor.MessageBuilder.visitString">
+<span class="sig-name descname"><span class="pre">visitString</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ctx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.visitor.MessageBuilder.visitString" title="Link to this definition">¶</a></dt>
+<dd><p>STRING token → QuotedStr (keeps original quoting intent).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ctx</strong> (<em>StringContext</em>)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-peak_acl">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-peak_acl" title="Link to this heading">¶</a></h2>
+<section id="peak-acl">
+<h3>peak_acl<a class="headerlink" href="#peak-acl" title="Link to this heading">¶</a></h3>
+<p>FIPA-ACL parser and transport helpers for the PEAK framework.</p>
+<section id="exports">
+<h4>Exports<a class="headerlink" href="#exports" title="Link to this heading">¶</a></h4>
+<ul class="simple">
+<li><p><a class="reference internal" href="#peak_acl.parse" title="peak_acl.parse"><code class="xref py py-func docutils literal notranslate"><span class="pre">parse()</span></code></a> – converts ACL strings into <a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage"><code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code></a></p></li>
+<li><p><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage"><code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code></a> – in-memory ACL message model</p></li>
+<li><p><a class="reference internal" href="#peak_acl.dumps" title="peak_acl.dumps"><code class="xref py py-func docutils literal notranslate"><span class="pre">dumps()</span></code></a> – serialize <a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage"><code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code></a> to FIPA-ACL string</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">__version__</span></code> – package version (PEP 440), fallback <code class="docutils literal notranslate"><span class="pre">&quot;0.0.0&quot;</span></code></p></li>
+</ul>
+</section>
+</section>
+<dl class="py class">
+<dt class="sig sig-object py" id="peak_acl.AclMessage">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">peak_acl.</span></span><span class="sig-name descname"><span class="pre">AclMessage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">performative</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sender=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">receivers=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reply_to=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">content=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">language=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">encoding=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ontology=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">protocol=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conversation_id=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reply_with=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_reply_to=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reply_by=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">user_params=&lt;factory&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_text=None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.AclMessage" title="Link to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>In-memory representation of a FIPA-ACL message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>performative</strong> (<em>str</em>)</p></li>
+<li><p><strong>sender</strong> (<em>AgentIdentifier</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>receivers</strong> (<em>List</em><em>[</em><em>AgentIdentifier</em><em>]</em>)</p></li>
+<li><p><strong>reply_to</strong> (<em>List</em><em>[</em><em>AgentIdentifier</em><em>]</em>)</p></li>
+<li><p><strong>content</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>language</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>encoding</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>ontology</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>protocol</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>conversation_id</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>reply_with</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>in_reply_to</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>reply_by</strong> (<em>datetime</em><em> | </em><em>None</em>)</p></li>
+<li><p><strong>user_params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>)</p></li>
+<li><p><strong>raw_text</strong> (<em>str</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.performative">
+<span class="sig-name descname"><span class="pre">performative</span></span><a class="headerlink" href="#peak_acl.AclMessage.performative" title="Link to this definition">¶</a></dt>
+<dd><p>Speech-act verb (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;INFORM&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;REQUEST&quot;</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.sender">
+<span class="sig-name descname"><span class="pre">sender</span></span><a class="headerlink" href="#peak_acl.AclMessage.sender" title="Link to this definition">¶</a></dt>
+<dd><p>Identity of the agent originating the message.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>peak_acl.message.aid.AgentIdentifier | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.receivers">
+<span class="sig-name descname"><span class="pre">receivers</span></span><a class="headerlink" href="#peak_acl.AclMessage.receivers" title="Link to this definition">¶</a></dt>
+<dd><p>Zero or more intended recipients.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[peak_acl.message.aid.AgentIdentifier]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.reply_to">
+<span class="sig-name descname"><span class="pre">reply_to</span></span><a class="headerlink" href="#peak_acl.AclMessage.reply_to" title="Link to this definition">¶</a></dt>
+<dd><p>Alternate address(es) the sender wants replies to go to.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[peak_acl.message.aid.AgentIdentifier]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.content">
+<span class="sig-name descname"><span class="pre">content</span></span><a class="headerlink" href="#peak_acl.AclMessage.content" title="Link to this definition">¶</a></dt>
+<dd><p>Application payload – free-form string/bytes/object or nested
+<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage"><code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">language,</span> <span class="pre">encoding,</span> <span class="pre">ontology,</span> <span class="pre">protocol</span></span></dt>
+<dd><p>Optional meta-data slots defined by the FIPA spec.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">conversation_id,</span> <span class="pre">reply_with,</span> <span class="pre">in_reply_to,</span> <span class="pre">reply_by</span></span></dt>
+<dd><p>Dialogue control &amp; correlation fields.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.user_params">
+<span class="sig-name descname"><span class="pre">user_params</span></span><a class="headerlink" href="#peak_acl.AclMessage.user_params" title="Link to this definition">¶</a></dt>
+<dd><p>Extra non-standard <code class="docutils literal notranslate"><span class="pre">X-*</span></code> slots preserved round-trip.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.raw_text">
+<span class="sig-name descname"><span class="pre">raw_text</span></span><a class="headerlink" href="#peak_acl.AclMessage.raw_text" title="Link to this definition">¶</a></dt>
+<dd><p>Original text version (debug / logging aid).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p class="rubric">Notes</p>
+<p>The class implements minimal <em>dict-like</em> behavior so existing code can do:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="s2">&quot;ontology&quot;</span> <span class="ow">in</span> <span class="n">msg</span><span class="p">:</span>
+    <span class="n">process</span><span class="p">(</span><span class="n">msg</span><span class="p">[</span><span class="s2">&quot;ontology&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>without breaking type safety for new code that uses attributes directly.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.add_receiver">
+<span class="sig-name descname"><span class="pre">add_receiver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.AclMessage.add_receiver" title="Link to this definition">¶</a></dt>
+<dd><p>Append <em>aid</em> to <a class="reference internal" href="#id14" title="peak_acl.AclMessage.receivers"><code class="xref py py-attr docutils literal notranslate"><span class="pre">receivers</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>aid</strong> (<em>AgentIdentifier</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.add_reply_to">
+<span class="sig-name descname"><span class="pre">add_reply_to</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">aid</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.AclMessage.add_reply_to" title="Link to this definition">¶</a></dt>
+<dd><p>Append <em>aid</em> to <a class="reference internal" href="#id15" title="peak_acl.AclMessage.reply_to"><code class="xref py py-attr docutils literal notranslate"><span class="pre">reply_to</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>aid</strong> (<em>AgentIdentifier</em>)</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">content</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id11" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.conversation_id">
+<span class="sig-name descname"><span class="pre">conversation_id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.AclMessage.conversation_id" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.encoding">
+<span class="sig-name descname"><span class="pre">encoding</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.AclMessage.encoding" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.get">
+<span class="sig-name descname"><span class="pre">get</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.AclMessage.get" title="Link to this definition">¶</a></dt>
+<dd><p>dict.get() equivalent; returns <em>default</em> if <em>key</em> is absent.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>key</strong> (<em>str</em>)</p></li>
+<li><p><strong>default</strong> (<em>Any</em><em> | </em><em>None</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.in_reply_to">
+<span class="sig-name descname"><span class="pre">in_reply_to</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.AclMessage.in_reply_to" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.language">
+<span class="sig-name descname"><span class="pre">language</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.AclMessage.language" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.ontology">
+<span class="sig-name descname"><span class="pre">ontology</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.AclMessage.ontology" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">performative</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#id12" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.performative_upper">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">performative_upper</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span></em><a class="headerlink" href="#peak_acl.AclMessage.performative_upper" title="Link to this definition">¶</a></dt>
+<dd><p>Return <a class="reference internal" href="#id12" title="peak_acl.AclMessage.performative"><code class="xref py py-attr docutils literal notranslate"><span class="pre">performative</span></code></a> normalized per FIPA rules.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.protocol">
+<span class="sig-name descname"><span class="pre">protocol</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.AclMessage.protocol" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id13">
+<span class="sig-name descname"><span class="pre">raw_text</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id13" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id14">
+<span class="sig-name descname"><span class="pre">receivers</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">AgentIdentifier</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id14" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.reply_by">
+<span class="sig-name descname"><span class="pre">reply_by</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">datetime</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.AclMessage.reply_by" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id15">
+<span class="sig-name descname"><span class="pre">reply_to</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">AgentIdentifier</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id15" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="peak_acl.AclMessage.reply_with">
+<span class="sig-name descname"><span class="pre">reply_with</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#peak_acl.AclMessage.reply_with" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id16">
+<span class="sig-name descname"><span class="pre">sender</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">AgentIdentifier</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></em><a class="headerlink" href="#id16" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id17">
+<span class="sig-name descname"><span class="pre">user_params</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#id17" title="Link to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.dumps">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.</span></span><span class="sig-name descname"><span class="pre">dumps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">msg</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.dumps" title="Link to this definition">¶</a></dt>
+<dd><p>Serialize an <a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage"><code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code></a> into a FIPA-ACL string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>msg</strong> (<a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.message.acl.AclMessage"><em>AclMessage</em></a>) – Message instance to serialize.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>JADE/FIPA-ACL compliant textual representation.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p><strong>CRITICAL PATCH for DF/JADE</strong>: if <code class="docutils literal notranslate"><span class="pre">language</span></code> starts with <code class="docutils literal notranslate"><span class="pre">&quot;fipa-sl&quot;</span></code>,
+ensure the content is wrapped in an extra pair of parentheses unless it
+already starts with <code class="docutils literal notranslate"><span class="pre">&quot;((&quot;</span></code>. This mirrors JADE’s expectations.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">user_params</span></code> are escaped/quoted with <code class="docutils literal notranslate"><span class="pre">_quote_val</span></code> to keep output
+syntactically valid.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="peak_acl.parse">
+<span class="sig-prename descclassname"><span class="pre">peak_acl.</span></span><span class="sig-name descname"><span class="pre">parse</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raw</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#peak_acl.parse" title="Link to this definition">¶</a></dt>
+<dd><p>Convert a raw ACL string into a fully populated <a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage"><code class="xref py py-class docutils literal notranslate"><span class="pre">AclMessage</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>raw</strong> (<em>str</em>) – ACL text (FIPA/JADE syntax).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Parsed message instance.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#peak_acl.AclMessage" title="peak_acl.AclMessage">AclMessage</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If ANTLR reports one or more syntax errors.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">MessageBuilder</span></code> visits the parse tree and constructs the object graph.</p></li>
+<li><p>You can extend <code class="docutils literal notranslate"><span class="pre">MessageBuilder</span></code> to decode extra slots or user params.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">peak-acl</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2025, Santiago Bossa.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.4.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+      |
+      <a href="_sources/peak_acl.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

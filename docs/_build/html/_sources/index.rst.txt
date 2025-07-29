@@ -6,9 +6,9 @@
 peak-acl documentation
 ======================
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
+
+This site contains the API reference generated from the source code. For usage
+examples and a full introduction see the project's ``README``.
 
 
 .. toctree::
