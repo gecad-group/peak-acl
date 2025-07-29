@@ -1,0 +1,14 @@
+# Ignore Python bytecode
+__pycache__/
+*.py[cod]
+
+# Ignore Sphinx build artifacts
+/docs/_build/
+/docs/_autosummary/
+
+# Ignore build metadata
+*.egg-info/
+
+# Ignore test and coverage artifacts
+.pytest_cache/
+.coverage
