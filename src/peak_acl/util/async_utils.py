@@ -14,8 +14,10 @@ Note
 Uses the ``|`` union operator in the type hint (``str | None``), which requires
 Python ≥ 3.10. Your project target is 3.9+, so this is fine at runtime (type
 hints are ignored) but tools like mypy/pyright on 3.9 may complain unless
-`from __future__ import annotations` or `typing.Optional[str]` is used.
+``from __future__ import annotations`` or ``typing.Optional[str]`` is used.
 """
+
+from __future__ import annotations
 
 import asyncio
 import logging
