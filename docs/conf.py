@@ -27,6 +27,8 @@ extensions = [
     'sphinx.ext.autosectionlabel',
 ]
 
+autosectionlabel_prefix_document = True
+
 autosummary_generate = True
 
 templates_path = ['_templates']
