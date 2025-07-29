@@ -28,7 +28,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Iterator, List, Optional, Sequence, Tuple, Union
 
-from .message.aid import AgentIdentifier
+from ..message.aid import AgentIdentifier
 
 __all__ = [
     "ServiceDescription",

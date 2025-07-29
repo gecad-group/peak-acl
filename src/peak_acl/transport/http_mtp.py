@@ -47,7 +47,7 @@ from typing import Awaitable, Callable, Optional, Tuple, TYPE_CHECKING
 from aiohttp import web
 
 from ..message.envelope import Envelope
-from ..parse import parse as parse_acl
+from ..parser import parse as parse_acl
 from ..util.async_utils import safe_create_task  # background task wrapper
 
 if TYPE_CHECKING:  # mypy / pylance only

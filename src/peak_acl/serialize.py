@@ -26,7 +26,7 @@ from typing import Any
 
 from .message.acl import AclMessage
 from .message.aid import AgentIdentifier
-from . import sl0  # import whole module to avoid circular imports
+from .sl import sl0  # import whole module to avoid circular imports
 
 
 # --------------------------------------------------------------------------- #

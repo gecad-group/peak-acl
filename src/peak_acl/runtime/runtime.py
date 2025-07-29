@@ -11,12 +11,13 @@ from typing import (
 
 import aiohttp.web
 
-from .message.aid import AgentIdentifier
-from .message.acl import AclMessage
-from .message.envelope import Envelope
-from .transport.http_mtp import HttpMtpServer, start_server
-from .transport.http_client import HttpMtpClient
-from . import df_manager, sl0, event, router
+from ..message.aid import AgentIdentifier
+from ..message.acl import AclMessage
+from ..message.envelope import Envelope
+from ..transport.http_mtp import HttpMtpServer, start_server
+from ..transport.http_client import HttpMtpClient
+from . import df_manager, event, router
+from ..sl import sl0
 from .dispatcher import InboundDispatcher, Callback
 from .message_template import MessageTemplate
 from .conversation import ConversationManager
