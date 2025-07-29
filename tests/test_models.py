@@ -1,8 +1,7 @@
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 
-from peak_acl.message.aid import AgentIdentifier
-from peak_acl.message.envelope import Envelope
+from peak_acl.message import AgentIdentifier, Envelope
 
 
 def test_agent_identifier_xml_roundtrip():

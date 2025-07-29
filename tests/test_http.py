@@ -3,10 +3,8 @@ import socket
 
 import pytest
 
-from peak_acl.message.aid import AgentIdentifier
-from peak_acl.message.acl import AclMessage
-from peak_acl.transport.http_mtp import start_server
-from peak_acl.transport.http_client import HttpMtpClient
+from peak_acl.message import AgentIdentifier, AclMessage
+from peak_acl.transport import start_server, HttpMtpClient
 
 
 def _free_port():

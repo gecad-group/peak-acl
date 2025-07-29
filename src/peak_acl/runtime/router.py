@@ -18,10 +18,12 @@ from __future__ import annotations
 from typing import Tuple, Any
 
 from .event import Kind
-from .message.envelope import Envelope
-from .message.acl import AclMessage
-from .message.aid import AgentIdentifier
-from . import df_manager, content as content_utils, sl0
+from ..message.envelope import Envelope
+from ..message.acl import AclMessage
+from ..message.aid import AgentIdentifier
+from . import df_manager
+from .. import content as content_utils
+from ..sl import sl0
 
 
 # --------------------------------------------------------------------------- #

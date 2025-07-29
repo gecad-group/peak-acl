@@ -14,11 +14,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Tuple
 
-from .generated.ACLVisitor import ACLVisitor
-from .generated.ACLParser import ACLParser
+from ..generated.ACLVisitor import ACLVisitor
+from ..generated.ACLParser import ACLParser
 
-from .message.acl import AclMessage
-from .types import QuotedStr  # keep compatibility
+from ..message.acl import AclMessage
+from ..types import QuotedStr  # keep compatibility
 from .parse_helpers import to_aid, to_aid_list, to_datetime
 
 

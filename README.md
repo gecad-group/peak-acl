@@ -67,7 +67,7 @@ print(msg['content'])          # "hello"
 
 ### Serialize an `AclMessage`
 ```python
-from peak_acl.message.acl import AclMessage
+from peak_acl.message import AclMessage
 from peak_acl.serialize import dumps
 
 m = AclMessage(
@@ -80,9 +80,8 @@ print(dumps(m))
 
 ### Send over HTTP-MTP
 ```python
-from peak_acl.transport.http_client import HttpMtpClient
-from peak_acl.message.aid import AgentIdentifier
-from peak_acl.message.acl import AclMessage
+from peak_acl.transport import HttpMtpClient
+from peak_acl.message import AgentIdentifier, AclMessage
 
 sender = AgentIdentifier("me@platform", ["http://localhost:7777/acc"])
 receiver = AgentIdentifier("df@platform", ["http://remote-host:7777/acc"])
@@ -96,7 +95,7 @@ async def main():
 ### Run an inbound HTTP-MTP server
 ```python
 import asyncio
-from peak_acl.transport.http_mtp import start_server
+from peak_acl.transport import start_server
 
 async def on_message(env, acl):
     print("IN:", env.from_.name, acl.performative_upper)
@@ -124,7 +123,7 @@ content = sl0.build_register_content(my, [("my-service", "type")], df=df)
 print(content)
 ```
 
-Higher-level convenience wrappers live in `peak_acl.df_manager` (register, deregister, search, decode replies).
+Higher-level convenience wrappers live in `peak_acl.runtime` (register, deregister, search, decode replies).
 
 ---
 
@@ -132,7 +131,7 @@ Higher-level convenience wrappers live in `peak_acl.df_manager` (register, dereg
 `ConversationManager` implements the typical FIPA-Request flow. You provide a low-level `send_fn` and it gives you a `Future` that resolves when the conversation ends.
 
 ```python
-from peak_acl.conversation import ConversationManager
+from peak_acl.runtime import ConversationManager
 
 async def send_fn(msg, url):
     ...  # your transport
@@ -147,7 +146,7 @@ It also supports optional timeouts.
 ---
 
 ## Events & Routing
-`peak_acl.router.classify_message` inspects an incoming `(Envelope, AclMessage)` pair and returns a `(kind, payload)` tuple (e.g., `"df-result"`, list of `AgentDescription`). See `peak_acl.event.Kind` for all kinds.
+`peak_acl.runtime.classify_message` inspects an incoming `(Envelope, AclMessage)` pair and returns a `(kind, payload)` tuple (e.g., `"df-result"`, list of `AgentDescription`). See `peak_acl.runtime.Kind` for all kinds.
 
 `InboundDispatcher` + `MessageTemplate` allow pattern-based callbacks for incoming ACLs.
 

@@ -20,9 +20,9 @@ from __future__ import annotations
 import io  # kept for future use (streams); currently unused
 
 from antlr4 import InputStream, CommonTokenStream
-from .generated.FipaSLLexer import FipaSLLexer
-from .generated.FipaSLParser import FipaSLParser
-from .generated.FipaSLVisitor import FipaSLVisitor  # for downstream visitors
+from ..generated.FipaSLLexer import FipaSLLexer
+from ..generated.FipaSLParser import FipaSLParser
+from ..generated.FipaSLVisitor import FipaSLVisitor  # for downstream visitors
 
 
 # --------------------------------------------------------------------------- #
