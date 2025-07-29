@@ -3,5 +3,10 @@ peak_acl
 
 .. toctree::
    :maxdepth: 4
+=======
+API Reference
+=============
 
-   peak_acl
+.. autosummary::
+   :toctree: _autosummary
+   :recursive:

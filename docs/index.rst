@@ -15,7 +15,7 @@ examples and a full introduction see the project's ``README``.
    :maxdepth: 2
    :caption: Contents:
 
-   modules
+modules
 
 Indices and tables
 ==================
