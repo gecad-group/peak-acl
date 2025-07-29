@@ -129,7 +129,7 @@ def to_datetime(v: Any) -> Optional[datetime]:
     Returns
     -------
     datetime | None
-        Parsed naive ``datetime`` (no tzinfo) or ``None`` if parsing fails.
+        Parsed timezone-aware ``datetime`` (UTC) or ``None`` if parsing fails.
     """
     if v is None:
         return None

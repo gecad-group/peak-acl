@@ -1,6 +1,6 @@
 # peak-acl: FIPA-ACL parser & transport helpers for PEAK
 
-> **PEAK-ACL** is a small that parses, builds and transports FIPA-ACL messages, with first-class support for JADE-compatible HTTP-MTP. It is designed to plug into the [PEAK](https://github.com/gecad-group/peak-mas) ecosystem but can be used standalone in any Python project.
+> **PEAK-ACL** is a small library that parses, builds and transports FIPA-ACL messages, with first-class support for JADE-compatible HTTP-MTP. It is designed to plug into the [PEAK](https://github.com/gecad-group/peak-mas) ecosystem but can be used standalone in any Python project.
 
 ---
 
