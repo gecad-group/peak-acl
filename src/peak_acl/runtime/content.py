@@ -21,10 +21,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from .message.acl import AclMessage
-from .sl_parser import parse
-from .sl_visitor import build_ast
-from . import sl0
+from ..message.acl import AclMessage
+from ..sl.sl_parser import parse
+from ..sl.sl_visitor import build_ast
+from ..sl import sl0
 
 
 # --------------------------------------------------------------------------- #

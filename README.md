@@ -68,7 +68,7 @@ print(msg['content'])          # "hello"
 ### Serialize an `AclMessage`
 ```python
 from peak_acl.message import AclMessage
-from peak_acl.serialize import dumps
+from peak_acl.message.serialize import dumps
 
 m = AclMessage(
     performative="request",

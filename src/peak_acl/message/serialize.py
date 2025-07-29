@@ -24,9 +24,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from .message.acl import AclMessage
-from .message.aid import AgentIdentifier
-from .sl import sl0  # import whole module to avoid circular imports
+from .acl import AclMessage
+from .aid import AgentIdentifier
+from ..sl import sl0  # import whole module to avoid circular imports
 
 
 # --------------------------------------------------------------------------- #
@@ -82,7 +82,7 @@ def _content_to_str(c: Any) -> str:
         return sl0.dumps(c)
 
     # Local import to avoid cycle at module import time
-    from .message.acl import AclMessage  # noqa: WPS433 (local import by design)
+    from .acl import AclMessage  # noqa: WPS433 (local import by design)
 
     if isinstance(c, AclMessage):
         return dumps(c)

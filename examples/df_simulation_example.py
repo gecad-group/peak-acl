@@ -16,7 +16,7 @@ from peak_acl.message.aid import AgentIdentifier
 from peak_acl.message.acl import AclMessage
 from peak_acl.transport.http_mtp import HttpMtpServer
 from peak_acl.transport.multipart import build_multipart
-from peak_acl.serialize import dumps
+from peak_acl.message.serialize import dumps
 
 # ─────────────── CONFIG LOGGING ─────────────────────────────────────
 logging.basicConfig(

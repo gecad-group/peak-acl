@@ -11,7 +11,7 @@ from datetime import datetime
 
 from peak_acl.message.aid import AgentIdentifier
 from peak_acl.parser import parse
-from peak_acl.serialize import dumps
+from peak_acl.message.serialize import dumps
 from peak_acl.transport.http_mtp import HttpMtpServer
 from peak_acl.transport.http_client import HttpMtpClient
 

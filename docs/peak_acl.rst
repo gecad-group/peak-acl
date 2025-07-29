@@ -4,10 +4,10 @@ peak\_acl package
 Submodules
 ----------
 
-peak\_acl.content module
-------------------------
+peak\_acl.runtime.content module
+---------------------------------------------------------
 
-.. automodule:: peak_acl.content
+.. automodule:: peak_acl.runtime.content
    :members:
    :show-inheritance:
    :undoc-members:
@@ -21,7 +21,7 @@ peak\_acl.message package
    :undoc-members:
 
 peak\_acl.transport package
---------------------------
+---------------------------------
 
 .. automodule:: peak_acl.transport
    :members:
@@ -29,7 +29,7 @@ peak\_acl.transport package
    :undoc-members:
 
 peak\_acl.util package
-----------------------
+----------------------------
 
 .. automodule:: peak_acl.util
    :members:
@@ -37,7 +37,7 @@ peak\_acl.util package
    :undoc-members:
 
 peak\_acl.runtime.conversation module
------------------------------
+------------------------------------
 
 .. automodule:: peak_acl.runtime.conversation
    :members:
@@ -45,7 +45,7 @@ peak\_acl.runtime.conversation module
    :undoc-members:
 
 peak\_acl.runtime.df\_manager module
-----------------------------
+-----------------------------------
 
 .. automodule:: peak_acl.runtime.df_manager
    :members:
@@ -53,7 +53,7 @@ peak\_acl.runtime.df\_manager module
    :undoc-members:
 
 peak\_acl.runtime.dispatcher module
----------------------------
+----------------------------------
 
 .. automodule:: peak_acl.runtime.dispatcher
    :members:
@@ -61,7 +61,7 @@ peak\_acl.runtime.dispatcher module
    :undoc-members:
 
 peak\_acl.runtime.event module
-----------------------
+----------------------------
 
 .. automodule:: peak_acl.runtime.event
    :members:
@@ -77,7 +77,7 @@ peak\_acl.sl.fipa\_am module
    :undoc-members:
 
 peak\_acl.runtime.message\_template module
-----------------------------------
+-----------------------------------------
 
 .. automodule:: peak_acl.runtime.message_template
    :members:
@@ -85,7 +85,7 @@ peak\_acl.runtime.message\_template module
    :undoc-members:
 
 peak\_acl.parser.parse module
-----------------------
+----------------------------
 
 .. automodule:: peak_acl.parser.parse
    :members:
@@ -93,7 +93,7 @@ peak\_acl.parser.parse module
    :undoc-members:
 
 peak\_acl.parser.parse\_helpers module
--------------------------------
+--------------------------------------
 
 .. automodule:: peak_acl.parser.parse_helpers
    :members:
@@ -116,10 +116,10 @@ peak\_acl.runtime.runtime module
    :show-inheritance:
    :undoc-members:
 
-peak\_acl.serialize module
---------------------------
+peak\_acl.message.serialize module
+---------------------------------
 
-.. automodule:: peak_acl.serialize
+.. automodule:: peak_acl.message.serialize
    :members:
    :show-inheritance:
    :undoc-members:
@@ -133,7 +133,7 @@ peak\_acl.sl.sl0 module
    :undoc-members:
 
 peak\_acl.sl.sl\_parser module
----------------------------
+----------------------------------
 
 .. automodule:: peak_acl.sl.sl_parser
    :members:
@@ -141,17 +141,17 @@ peak\_acl.sl.sl\_parser module
    :undoc-members:
 
 peak\_acl.sl.sl\_visitor module
-----------------------------
+-----------------------------------
 
 .. automodule:: peak_acl.sl.sl_visitor
    :members:
    :show-inheritance:
    :undoc-members:
 
-peak\_acl.types module
-----------------------
+peak\_acl.parser.types module
+----------------------------
 
-.. automodule:: peak_acl.types
+.. automodule:: peak_acl.parser.types
    :members:
    :show-inheritance:
    :undoc-members:

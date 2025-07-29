@@ -27,7 +27,7 @@ from typing import Iterable, Optional, Sequence, Tuple, Union, List
 from ..message.aid import AgentIdentifier
 from ..message.acl import AclMessage
 from ..transport.http_client import HttpMtpClient
-from ..content import decode_content
+from .content import decode_content
 from ..sl import sl0, fipa_am
 
 __all__ = [

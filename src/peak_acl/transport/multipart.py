@@ -17,7 +17,7 @@ from typing import Tuple
 from datetime import datetime, timezone
 import uuid
 
-from ..serialize import dumps
+from ..message.serialize import dumps
 from ..message.aid import AgentIdentifier
 from ..message.envelope import Envelope
 from ..message.acl import AclMessage
