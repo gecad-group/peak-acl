@@ -1,6 +1,14 @@
 # peak-acl: FIPA-ACL parser & transport helpers for PEAK
 
-> **PEAK-ACL** is a small library that parses, builds and transports FIPA-ACL messages, with first-class support for JADE-compatible HTTP-MTP. It is designed to plug into the [PEAK](https://github.com/gecad-group/peak-mas) ecosystem but can be used standalone in any Python project.
+[![PyPI](https://img.shields.io/pypi/v/peak-acl)](https://pypi.org/project/peak-acl/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/peak-acl)](https://pypi.org/project/peak-acl/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+`peak-acl` is a lightweight package that parses, builds and transports
+[FIPA-ACL](https://www.fipa.org/specs/fipa00061/SC00061G.html) messages with
+first-class support for JADE-compatible HTTP-MTP. It integrates with the
+[PEAK](https://github.com/gecad-group/peak-mas) framework but can be used in any
+Python project.
 
 ---
 
@@ -8,13 +16,7 @@
 - [Features](#features)
 - [Prerequisites](#prerequisites)
 - [Installation](#installation)
-  - [PyPI](#pypi)
-  - [From source / dev mode](#from-source--dev-mode)
 - [Quick Start](#quick-start)
-  - [Parse an ACL string](#parse-an-acl-string)
-  - [Serialize an `AclMessage`](#serialize-an-aclmessage)
-  - [Send over HTTP-MTP](#send-over-http-mtp)
-  - [Run an inbound HTTP-MTP server](#run-an-inbound-http-mtp-server)
 - [Working with SL0 / DF Helpers](#working-with-sl0--df-helpers)
 - [Conversation Manager](#conversation-manager)
 - [Events & Routing](#events--routing)
@@ -26,65 +28,67 @@
 ---
 
 ## Features
-- ✅ **Full FIPA-ACL message model** (`performative`, `sender`, `receiver`, etc.), JADE-compatible.
-- ✅ **Dict-like accessors** on `AclMessage` (`msg["content"]`, `"ontology" in msg`, `msg.get(...)`).
+- ✅ **Full FIPA-ACL message model** (`performative`, `sender`, `receiver`, ...).
+- ✅ **Dict-like access** on `AclMessage` (`msg["content"]`, `msg.get(...)`).
 - ✅ **ANTLR-based FIPA-ACL parser** → `AclMessage` objects.
-- ✅ **SL0 implementation** for Directory Facilitator (DF/AMS) interactions.
-- ✅ **HTTP-MTP client & server** (multipart/mixed) with retries/backoff and tolerant multipart parsing.
-- ✅ **Conversation manager** for the FIPA-Request protocol (REQUEST -> {AGREE|REFUSE} -> {INFORM|FAILURE}).
-- ✅ **Utilities**: message routing, content decoding, async helpers.
+- ✅ **SL0 helpers** for Directory Facilitator interactions.
+- ✅ **HTTP-MTP client & server** with automatic retries.
+- ✅ **Conversation manager** implementing the FIPA-Request protocol.
+- ✅ **Utilities** for message routing and async helpers.
 
 ---
 
 ## Prerequisites
 - Python **>= 3.9**
-- Optional (at runtime): a JADE ACC or compatible HTTP-MTP endpoint to talk to.
+- Optional: a JADE ACC or compatible HTTP-MTP endpoint.
 
-Development requirements are listed under the `dev` extra (pytest, mypy, black, isort, etc.).
+Development requirements are provided under the `dev` extra (pytest, mypy, black, isort, ...).
 
 ---
 
 ## Installation
 
-### PyPI
 ```bash
 pip install peak-acl
+```
+
+To work on the project from source:
+
+```bash
+git clone https://github.com/gecad-group/peak-acl.git
+pip install -e .[dev]
 ```
 
 ---
 
 ## Quick Start
 
-### Parse an ACL string
+Parse an ACL string:
 ```python
 from peak_acl import parse
 
-raw = "(inform :content \"hello\" :sender (agent-identifier :name alice :addresses (sequence)) )"
+raw = "(inform :content \"hello\")"
 msg = parse(raw)
-print(msg.performative_upper)  # INFORM
-print(msg['content'])          # "hello"
+print(msg.performative_upper)
+print(msg['content'])
 ```
 
-### Serialize an `AclMessage`
+Serialize an `AclMessage`:
 ```python
 from peak_acl.message import AclMessage
 from peak_acl.message.serialize import dumps
 
-m = AclMessage(
-    performative="request",
-    content="(do-something)",
-    language="fipa-sl0",
-)
+m = AclMessage(performative="request", content="(do-something)")
 print(dumps(m))
 ```
 
-### Send over HTTP-MTP
+Send over HTTP-MTP:
 ```python
 from peak_acl.transport import HttpMtpClient
 from peak_acl.message import AgentIdentifier, AclMessage
 
-sender = AgentIdentifier("me@platform", ["http://localhost:7777/acc"])
-receiver = AgentIdentifier("df@platform", ["http://remote-host:7777/acc"])
+sender = AgentIdentifier("me@host", ["http://localhost:7777/acc"])
+receiver = AgentIdentifier("df@host", ["http://other:7777/acc"])
 acl = AclMessage(performative="inform", content="hi")
 
 async def main():
@@ -92,7 +96,7 @@ async def main():
         await client.send(receiver, sender, acl, receiver.addresses[0])
 ```
 
-### Run an inbound HTTP-MTP server
+Run an inbound HTTP-MTP server:
 ```python
 import asyncio
 from peak_acl.transport import start_server
@@ -101,8 +105,8 @@ async def on_message(env, acl):
     print("IN:", env.from_.name, acl.performative_upper)
 
 async def main():
-    server, runner, site = await start_server(on_message=on_message, port=7777)
-    await asyncio.Event().wait()  # keep running
+    await start_server(on_message=on_message, port=7777)
+    await asyncio.Event().wait()
 
 asyncio.run(main())
 ```
@@ -110,79 +114,55 @@ asyncio.run(main())
 ---
 
 ## Working with SL0 / DF Helpers
-The module `peak_acl.sl0` offers a small AST + serializer/parser for FIPA-SL0, enough to talk to JADE's DF/AMS:
-
-```python
-from peak_acl import sl0
-from peak_acl.message.aid import AgentIdentifier
-
-my = AgentIdentifier("agent@platform", ["http://localhost:7777/acc"])
-df = AgentIdentifier("df@platform", ["http://host:7777/acc"])
-
-content = sl0.build_register_content(my, [("my-service", "type")], df=df)
-print(content)
-```
-
-Higher-level convenience wrappers live in `peak_acl.runtime` (register, deregister, search, decode replies).
+`peak_acl.sl0` provides a minimal AST and serializer for FIPA-SL0 to talk to
+JADE's DF/AMS.
 
 ---
 
 ## Conversation Manager
-`ConversationManager` implements the typical FIPA-Request flow. You provide a low-level `send_fn` and it gives you a `Future` that resolves when the conversation ends.
-
-```python
-from peak_acl.runtime import ConversationManager
-
-async def send_fn(msg, url):
-    ...  # your transport
-
-cm = ConversationManager(send_fn)
-future = await cm.send_request(sender=..., receiver=..., content="(foo)")
-reply_msg = await future  # INFORM / FAILURE / REFUSE
-```
-
-It also supports optional timeouts.
+`ConversationManager` helps implementing the FIPA-Request flow. Supply a
+low-level `send_fn` and await the resulting `Future` for the reply.
 
 ---
 
 ## Events & Routing
-`peak_acl.runtime.classify_message` inspects an incoming `(Envelope, AclMessage)` pair and returns a `(kind, payload)` tuple (e.g., `"df-result"`, list of `AgentDescription`). See `peak_acl.runtime.Kind` for all kinds.
-
-`InboundDispatcher` + `MessageTemplate` allow pattern-based callbacks for incoming ACLs.
+`InboundDispatcher` plus `MessageTemplate` allow pattern-based callbacks for
+incoming ACLs. See `peak_acl.runtime.classify_message` for predefined kinds.
 
 ---
 
 ## Documentation
-HTML API documentation is generated with **Sphinx** using the
-[`furo`](https://github.com/pradyunsg/furo) theme. Install the optional
-documentation dependencies and build it locally:
+HTML API docs are generated with **Sphinx** using the
+[`furo`](https://github.com/pradyunsg/furo) theme.
 
 ```bash
 pip install -e .[docs]
 make -C docs html
 ```
 
-The resulting site will be available under `docs/_build/html/index.html`.
+Open `docs/_build/html/index.html` in your browser.
 
 ---
 
 ## Roadmap
-- Integrate richer SL (beyond SL0) AST/visitor support.
-- Optional IPv6-aware network utils.
-- More exhaustive error handling/typing for user-defined params.
-- Sphinx documentation site (autodoc from current docstrings).
+- Richer SL (beyond SL0) support.
+- Optional IPv6-aware network utilities.
+- Extended error handling for user-defined parameters.
+- Sphinx documentation site populated from docstrings.
 
 ---
 
 ## Contributing
-Pull requests are welcome! For substantial changes, open a discussion first.
+Pull requests are welcome! For significant changes please open a discussion
+first.
 
 - Format code with **black** and **isort**.
-- Run tests with **pytest** (async tests use pytest-asyncio).
-- Follow Conventional Commits if possible (e.g., `feat:`, `fix:`).
+- Run tests with **pytest**.
+- Follow Conventional Commits when possible.
 
 ---
 
 ## License
-`peak-acl` is **free and open-source** software. See the `LICENSE` file for full text.
+`peak-acl` is released under the MIT License. See the `LICENSE` file for
+details.
 
