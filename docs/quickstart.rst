@@ -1,0 +1,61 @@
+Quick Start
+===========
+
+Install the package:
+
+.. code-block:: bash
+
+    pip install peak-acl
+
+Parse an ACL string:
+
+.. code-block:: python
+
+    from peak_acl import parse
+
+    raw = "(inform :content \"hello\")"
+    msg = parse(raw)
+    print(msg.performative_upper)
+    print(msg["content"])
+
+Serialize an ``AclMessage``:
+
+.. code-block:: python
+
+    from peak_acl.message import AclMessage
+    from peak_acl.message.serialize import dumps
+
+    m = AclMessage(performative="request", content="(do-something)")
+    print(dumps(m))
+
+Send over HTTP-MTP:
+
+.. code-block:: python
+
+    from peak_acl.transport import HttpMtpClient
+    from peak_acl.message import AgentIdentifier, AclMessage
+
+    sender = AgentIdentifier("me@host", ["http://localhost:7777/acc"])
+    receiver = AgentIdentifier("df@host", ["http://other:7777/acc"])
+    acl = AclMessage(performative="inform", content="hi")
+
+    async def main():
+        async with HttpMtpClient() as client:
+            await client.send(receiver, sender, acl, receiver.addresses[0])
+
+Run an inbound HTTP-MTP server:
+
+.. code-block:: python
+
+    import asyncio
+    from peak_acl.transport import start_server
+
+    async def on_message(env, acl):
+        print("IN:", env.from_.name, acl.performative_upper)
+
+    async def main():
+        await start_server(on_message=on_message, port=7777)
+        await asyncio.Event().wait()
+
+    asyncio.run(main())
+
