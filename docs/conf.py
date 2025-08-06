@@ -25,6 +25,7 @@ extensions = [
     "sphinx.ext.autosummary",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.intersphinx",
     "myst_parser",
 ]
 
@@ -35,6 +36,14 @@ autosummary_generate = True
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", "https://docs.python.org/3/objects.inv"),
+    "aiohttp": (
+        "https://docs.aiohttp.org/en/stable/",
+        "https://docs.aiohttp.org/en/stable/objects.inv",
+    ),
+}
 
 
 # -- Options for HTML output -------------------------------------------------
