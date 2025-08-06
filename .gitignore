@@ -12,3 +12,4 @@ __pycache__/
 # Ignore test and coverage artifacts
 .pytest_cache/
 .coverage
+.venv-test/
