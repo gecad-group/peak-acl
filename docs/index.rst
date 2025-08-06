@@ -3,8 +3,9 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: API Reference
+   :caption: Contents
 
+   quickstart
    modules
 
 Indices and tables
