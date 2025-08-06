@@ -25,6 +25,7 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.napoleon',
     'sphinx.ext.autosectionlabel',
+    'myst_parser',
 ]
 
 autosectionlabel_prefix_document = True
