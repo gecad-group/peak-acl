@@ -31,3 +31,6 @@ docs = ["sphinx", "furo"]
 Homepage = "https://github.com/gecad-group/peak-acl"
 Repository = "https://github.com/gecad-group/peak-acl"
 "Bug Tracker" = "https://github.com/gecad-group/peak-acl/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
