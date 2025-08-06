@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/peak-acl)](https://pypi.org/project/peak-acl/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/peak-acl)](https://pypi.org/project/peak-acl/)
-[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](../LICENSE)
 
 `peak-acl` is a lightweight package that parses, builds and transports
 [FIPA-ACL](https://www.fipa.org/specs/fipa00061/SC00061G.html) messages with
@@ -13,20 +13,21 @@ Python project.
 ---
 
 ## Table of Contents
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Working with SL0 / DF Helpers](#working-with-sl0--df-helpers)
-- [Conversation Manager](#conversation-manager)
-- [Events & Routing](#events--routing)
-- [Documentation](#documentation)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [License](#license)
+- [Features](#readme-features)
+- [Prerequisites](#readme-prerequisites)
+- [Installation](#readme-installation)
+- [Quick Start](#readme-quick-start)
+- [Working with SL0 / DF Helpers](#readme-working-with-sl0--df-helpers)
+- [Conversation Manager](#readme-conversation-manager)
+- [Events & Routing](#readme-events--routing)
+- [Documentation](#readme-documentation)
+- [Roadmap](#readme-roadmap)
+- [Contributing](#readme-contributing)
+- [License](#readme-license)
 
 ---
 
+(readme-features)=
 ## Features
 - ✅ **Full FIPA-ACL message model** (`performative`, `sender`, `receiver`, ...).
 - ✅ **Dict-like access** on `AclMessage` (`msg["content"]`, `msg.get(...)`).
@@ -38,6 +39,7 @@ Python project.
 
 ---
 
+(readme-prerequisites)=
 ## Prerequisites
 - Python **>= 3.9**
 - Optional: a JADE ACC or compatible HTTP-MTP endpoint.
@@ -46,6 +48,7 @@ Development requirements are provided under the `dev` extra (pytest, mypy, black
 
 ---
 
+(readme-installation)=
 ## Installation
 
 ```bash
@@ -53,6 +56,7 @@ pip install peak-acl
 ```
 ---
 
+(readme-quick-start)=
 ## Quick Start
 
 Parse an ACL string:
@@ -105,24 +109,35 @@ asyncio.run(main())
 
 ---
 
+(readme-working-with-sl0--df-helpers)=
 ## Working with SL0 / DF Helpers
 `peak_acl.sl0` provides a minimal AST and serializer for FIPA-SL0 to talk to
 JADE's DF/AMS.
 
 ---
 
+(readme-conversation-manager)=
 ## Conversation Manager
 `ConversationManager` helps implementing the FIPA-Request flow. Supply a
 low-level `send_fn` and await the resulting `Future` for the reply.
 
 ---
 
+(readme-events--routing)=
 ## Events & Routing
 `InboundDispatcher` plus `MessageTemplate` allow pattern-based callbacks for
 incoming ACLs. See `peak_acl.runtime.classify_message` for predefined kinds.
 
 ---
 
+(readme-documentation)=
+## Documentation
+The project's full API and usage documentation is available within this Sphinx site
+and online at the project's repository.
+
+---
+
+(readme-roadmap)=
 ## Roadmap
 - Richer SL (beyond SL0) support.
 - Optional IPv6-aware network utilities.
@@ -131,6 +146,14 @@ incoming ACLs. See `peak_acl.runtime.classify_message` for predefined kinds.
 
 ---
 
+(readme-contributing)=
+## Contributing
+Contributions are welcome! Feel free to open issues or submit pull requests on
+GitHub.
+
+---
+
+(readme-license)=
 ## License
 `peak-acl` is licensed under the GNU GPL v3. See the `LICENSE` file for
 details.
