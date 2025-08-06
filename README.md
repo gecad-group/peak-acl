@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/peak-acl)](https://pypi.org/project/peak-acl/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/peak-acl)](https://pypi.org/project/peak-acl/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 
 `peak-acl` is a lightweight package that parses, builds and transports
 [FIPA-ACL](https://www.fipa.org/specs/fipa00061/SC00061G.html) messages with
@@ -163,6 +163,6 @@ first.
 ---
 
 ## License
-`peak-acl` is released under the MIT License. See the `LICENSE` file for
+`peak-acl` is licensed under the GNU GPL v3. See the `LICENSE` file for
 details.
 
