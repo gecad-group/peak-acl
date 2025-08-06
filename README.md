@@ -51,14 +51,6 @@ Development requirements are provided under the `dev` extra (pytest, mypy, black
 ```bash
 pip install peak-acl
 ```
-
-To work on the project from source:
-
-```bash
-git clone https://github.com/gecad-group/peak-acl.git
-pip install -e .[dev]
-```
-
 ---
 
 ## Quick Start
@@ -131,34 +123,11 @@ incoming ACLs. See `peak_acl.runtime.classify_message` for predefined kinds.
 
 ---
 
-## Documentation
-HTML API docs are generated with **Sphinx** using the
-[`furo`](https://github.com/pradyunsg/furo) theme.
-
-```bash
-pip install -e .[docs]
-make -C docs html
-```
-
-Open `docs/_build/html/index.html` in your browser.
-
----
-
 ## Roadmap
 - Richer SL (beyond SL0) support.
 - Optional IPv6-aware network utilities.
 - Extended error handling for user-defined parameters.
 - Sphinx documentation site populated from docstrings.
-
----
-
-## Contributing
-Pull requests are welcome! For significant changes please open a discussion
-first.
-
-- Format code with **black** and **isort**.
-- Run tests with **pytest**.
-- Follow Conventional Commits when possible.
 
 ---
 
