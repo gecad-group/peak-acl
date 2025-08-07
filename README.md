@@ -123,6 +123,12 @@ incoming ACLs. See `peak_acl.runtime.classify_message` for predefined kinds.
 
 ---
 
+## Documentation
+The Sphinx docs use the Furo theme with custom tweaks for larger fonts,
+softer code blocks and a narrower navigation sidebar to improve readability.
+
+---
+
 ## Roadmap
 - Richer SL (beyond SL0) support.
 - Optional IPv6-aware network utilities.
