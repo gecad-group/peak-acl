@@ -8,6 +8,11 @@ Use the conversation manager to handle FIPA-Request style conversations
 where a request may produce multiple replies. It tracks conversation IDs
 and resolves a future when the final INFORM or FAILURE arrives.
 
+.. note::
+   Make sure every inbound ACL is passed to
+   :meth:`~peak_acl.runtime.conversation.ConversationManager.on_message` so
+   pending conversations can progress.
+
 Example
 -------
 

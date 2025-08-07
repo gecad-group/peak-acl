@@ -29,6 +29,12 @@ extensions = [
     "myst_parser",
 ]
 
+# Enable extra MyST Markdown features
+myst_enable_extensions = [
+    "deflist",
+    "colon_fence",
+]
+
 autosectionlabel_prefix_document = True
 
 # Generate stub pages for autosummary directives

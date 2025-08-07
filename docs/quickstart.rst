@@ -7,6 +7,9 @@ Quick Start
    :func:`~peak_acl.parser.parse.parse` for converting ACL strings into
    :class:`~peak_acl.message.acl.AclMessage` objects.
 
+   .. note::
+      ``peak-acl`` requires Python 3.9 or newer.
+
    .. code-block:: bash
 
       pip install peak-acl
@@ -62,6 +65,10 @@ Quick Start
 
    Accept incoming messages by starting a listener with
    :func:`~peak_acl.transport.http_mtp.start_server`.
+
+   .. warning::
+      The server example below listens on all interfaces without
+      authentication. Use it only in trusted environments.
 
    .. code-block:: python
 
