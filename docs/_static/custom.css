@@ -2,6 +2,7 @@
 :root {
   --color-brand-primary: #4a76a8;
   --font-stack: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --content-width: 1000px; /* increase main content width */
 }
 
 /* Light mode variables */
