@@ -1,4 +1,11 @@
-# peak_acl/runtime.py
+"""High-level runtime endpoint for sending and receiving ACL messages.
+
+This module wires together HTTP-MTP transport, message dispatching and
+Directory Facilitator helpers.  The :class:`CommEndpoint` class offers a
+compact API to run an agent endpoint, send messages and iterate over inbound
+events.
+"""
+
 from __future__ import annotations
 
 import asyncio
@@ -40,12 +47,27 @@ class _RawMsg:                # só para a fila interna
 # --------------------------------------------------------------------------- #
 @dataclass
 class CommEndpoint(AsyncIterator[event.MsgEvent]):
-    """
-    Endpoint = HTTP‑MTP server + client + helpers.
+    """Bundle of HTTP-MTP transport, dispatcher and DF helpers.
 
-    * Usa callbacks via register_handler()
-    * Continúa a suportar `async for evt in ep`
-      (eventos ficam numa fila interna _events)
+    Parameters
+    ----------
+    my_aid :
+        Identity of the running agent.
+    inbox :
+        Queue populated by the HTTP-MTP server with ``(Envelope, AclMessage)``
+        pairs.
+    client :
+        HTTP-MTP client used to send outbound messages.
+    server, runner, site :
+        ``aiohttp`` objects controlling the inbound HTTP server.
+    df_aid :
+        Optional Directory Facilitator identifier for DF helpers.
+
+    Examples
+    --------
+    >>> ep = await start_endpoint(my_aid=my_ai)
+    >>> async for evt in ep:
+    ...     print(evt.kind)
     """
     my_aid: AgentIdentifier
     inbox: asyncio.Queue                # (Envelope, AclMessage) do servidor
@@ -122,6 +144,32 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
         in_reply_to: Optional[str] = None,
         reply_by: Optional[str] = None,
     ) -> AclMessage:
+        """Send a bare ACL message to one or more recipients.
+
+        Parameters
+        ----------
+        to :
+            Single recipient or iterable of recipients.
+        performative :
+            Speech-act verb to use (e.g., ``"INFORM"``).
+        content :
+            Optional payload. Non-strings are serialized with
+            :func:`peak_acl.sl.sl0.dumps`.
+        language, ontology, protocol :
+            Optional metadata slots copied into the message.
+        conversation_id, reply_with, in_reply_to, reply_by :
+            Optional dialogue control fields.
+
+        Returns
+        -------
+        AclMessage
+            The message instance that was dispatched.
+
+        Examples
+        --------
+        >>> await ep.send_acl(to=aid, performative="inform", content="hi")
+        AclMessage(...)
+        """
         receivers = [to] if isinstance(to, AgentIdentifier) else list(to)
         if not receivers:
             raise ValueError("send_acl() sem receivers.")
@@ -165,6 +213,21 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
         ontology: str | None = None,
         cb: Callback,
     ):
+        """Register a callback matched by a message template.
+
+        Parameters
+        ----------
+        performative, protocol, ontology :
+            Optional template fields; only provided values are tested.
+        cb :
+            Coroutine function receiving ``(sender, acl)``.
+
+        Examples
+        --------
+        >>> async def on_inform(sender, msg):
+        ...     print("got", msg.content)
+        >>> ep.register_handler(performative="inform", cb=on_inform)
+        """
         tmpl = MessageTemplate(
             performative=performative,
             protocol=protocol,
@@ -221,7 +284,37 @@ async def start_endpoint(
     http_client: Optional[HttpMtpClient] = None,
     loop=None,
 ) -> CommEndpoint:
-    """Cria server + client, arranca loop interno e devolve CommEndpoint."""
+    """Create and start an HTTP-MTP endpoint for an agent.
+
+    Parameters
+    ----------
+    my_aid :
+        Agent identifier with at least one HTTP address.
+    bind_host :
+        Host/IP to bind the inbound HTTP server (default ``"0.0.0.0"``).
+    auto_register :
+        If ``True``, automatically register *services* at the Directory
+        Facilitator specified by ``df_aid``.
+    df_aid :
+        Directory Facilitator identifier used for auto-registration.
+    services :
+        Optional sequence of ``(name, type)`` tuples describing services.
+    http_client :
+        Existing :class:`HttpMtpClient` to reuse. A new one is created if
+        omitted.
+    loop :
+        Event loop to use (primarily for testing).
+
+    Returns
+    -------
+    CommEndpoint
+        Fully started endpoint ready to send and receive messages.
+
+    Examples
+    --------
+    >>> my = AgentIdentifier("me", ["http://127.0.0.1:8000/acc"])
+    >>> ep = await start_endpoint(my_aid=my)
+    """
     from urllib.parse import urlparse
 
     port = (urlparse(my_aid.addresses[0]).port or 80)

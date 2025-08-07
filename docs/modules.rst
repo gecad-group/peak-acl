@@ -1,8 +1,11 @@
 API Reference
 =============
 
-Runtime
--------
+Runtime Components
+------------------
+
+Core utilities for running an agent, handling conversations and
+dispatching inbound messages.
 
 .. autosummary::
    :toctree: _autosummary
@@ -17,8 +20,11 @@ Runtime
    peak_acl.runtime.router
    peak_acl.runtime.runtime
 
-SL
---
+Semantic Language (SL)
+----------------------
+
+Helpers for parsing, serializing and manipulating FIPA Semantic Language
+constructs including the Agent Management ontology.
 
 .. autosummary::
    :toctree: _autosummary
@@ -29,8 +35,10 @@ SL
    peak_acl.sl.sl_parser
    peak_acl.sl.sl_visitor
 
-Parser
-------
+Parser Utilities
+----------------
+
+Functions and visitors that translate raw ACL strings into Python objects.
 
 .. autosummary::
    :toctree: _autosummary
@@ -41,8 +49,11 @@ Parser
    peak_acl.parser.types
    peak_acl.parser.visitor
 
-Message
--------
+Message Models
+--------------
+
+In-memory representations of ACL messages, envelopes and serialization
+helpers.
 
 .. autosummary::
    :toctree: _autosummary
@@ -53,8 +64,10 @@ Message
    peak_acl.message.envelope
    peak_acl.message.serialize
 
-Transport
----------
+Transport Layer
+---------------
+
+HTTP-based Message Transport Protocol implementations and multipart helpers.
 
 .. autosummary::
    :toctree: _autosummary
@@ -65,8 +78,11 @@ Transport
    peak_acl.transport.http_mtp
    peak_acl.transport.multipart
 
-Utility
--------
+Utility Helpers
+---------------
+
+Miscellaneous asynchronous and networking utilities used throughout the
+project.
 
 .. autosummary::
    :toctree: _autosummary

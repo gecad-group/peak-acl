@@ -4,7 +4,6 @@ __pycache__/
 
 # Ignore Sphinx build artifacts
 /docs/_build/
-/docs/_autosummary/
 
 # Ignore build metadata
 *.egg-info/
