@@ -1,61 +1,79 @@
 Quick Start
 ===========
 
-Install the package:
+#. **Install**
 
-.. code-block:: bash
+   Install the library to access helpers such as
+   :func:`~peak_acl.parser.parse.parse` for converting ACL strings into
+   :class:`~peak_acl.message.acl.AclMessage` objects.
 
-    pip install peak-acl
+   .. code-block:: bash
 
-Parse an ACL string:
+      pip install peak-acl
 
-.. code-block:: python
+#. **Parse a message**
 
-    from peak_acl import parse
+   Convert a raw FIPA ACL string into an
+   :class:`~peak_acl.message.acl.AclMessage` using
+   :func:`~peak_acl.parser.parse.parse`.
 
-    raw = "(inform :content \"hello\")"
-    msg = parse(raw)
-    print(msg.performative_upper)
-    print(msg["content"])
+   .. code-block:: python
 
-Serialize an ``AclMessage``:
+      from peak_acl import parse
 
-.. code-block:: python
+      raw = "(inform :content \"hello\")"
+      msg = parse(raw)
+      print(msg.performative_upper)
+      print(msg["content"])
 
-    from peak_acl.message import AclMessage
-    from peak_acl.message.serialize import dumps
+#. **Serialize a message**
 
-    m = AclMessage(performative="request", content="(do-something)")
-    print(dumps(m))
+   Build an :class:`~peak_acl.message.acl.AclMessage` and encode it back to
+   a string with :func:`~peak_acl.message.serialize.dumps`.
 
-Send over HTTP-MTP:
+   .. code-block:: python
 
-.. code-block:: python
+      from peak_acl.message import AclMessage
+      from peak_acl.message.serialize import dumps
 
-    from peak_acl.transport import HttpMtpClient
-    from peak_acl.message import AgentIdentifier, AclMessage
+      m = AclMessage(performative="request", content="(do-something)")
+      print(dumps(m))
 
-    sender = AgentIdentifier("me@host", ["http://localhost:7777/acc"])
-    receiver = AgentIdentifier("df@host", ["http://other:7777/acc"])
-    acl = AclMessage(performative="inform", content="hi")
+#. **Send over HTTP-MTP**
 
-    async def main():
-        async with HttpMtpClient() as client:
+   Deliver a message to another agent via
+   :class:`~peak_acl.transport.http_client.HttpMtpClient` using
+   addresses defined by :class:`~peak_acl.message.aid.AgentIdentifier`.
+
+   .. code-block:: python
+
+      from peak_acl.transport import HttpMtpClient
+      from peak_acl.message import AgentIdentifier, AclMessage
+
+      sender = AgentIdentifier("me@host", ["http://localhost:7777/acc"])
+      receiver = AgentIdentifier("df@host", ["http://other:7777/acc"])
+      acl = AclMessage(performative="inform", content="hi")
+
+      async def main():
+         async with HttpMtpClient() as client:
             await client.send(receiver, sender, acl, receiver.addresses[0])
 
-Run an inbound HTTP-MTP server:
+#. **Run an inbound HTTP-MTP server**
 
-.. code-block:: python
+   Accept incoming messages by starting a listener with
+   :func:`~peak_acl.transport.http_mtp.start_server`.
 
-    import asyncio
-    from peak_acl.transport import start_server
+   .. code-block:: python
 
-    async def on_message(env, acl):
-        print("IN:", env.from_.name, acl.performative_upper)
+      import asyncio
+      from peak_acl.transport import start_server
 
-    async def main():
-        await start_server(on_message=on_message, port=7777)
-        await asyncio.Event().wait()
+      async def on_message(env, acl):
+         print("IN:", env.from_.name, acl.performative_upper)
 
-    asyncio.run(main())
+      async def main():
+         await start_server(on_message=on_message, port=7777)
+         await asyncio.Event().wait()
+
+      asyncio.run(main())
 
