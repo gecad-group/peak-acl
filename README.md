@@ -2,7 +2,7 @@
 
 [![PyPI](https://img.shields.io/pypi/v/peak-acl)](https://pypi.org/project/peak-acl/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/peak-acl)](https://pypi.org/project/peak-acl/)
-[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](https://github.com/gecad-group/peak-acl/blob/main/LICENSE)
 
 `peak-acl` is a Python library for parsing, constructing, and transporting
 [FIPA-ACL](https://www.fipa.org/specs/fipa00061/SC00061G.html) messages. It
