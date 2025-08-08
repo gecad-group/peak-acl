@@ -13,19 +13,6 @@ framework, it can also be used independently in any Python project.
 
 ---
 
-## Table of Contents
-- [Features](#features)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Working with SL0 / DF Helpers](#working-with-sl0--df-helpers)
-- [Conversation Manager](#conversation-manager)
-- [Events & Routing](#events--routing)
-- [Roadmap](#roadmap)
-- [License](#license)
-
----
-
 ## Features
 The library supports the full FIPA-ACL message model with dictionary-style
 access, provides SL0 helpers for Directory Facilitator interactions, includes an
