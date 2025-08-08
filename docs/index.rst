@@ -1,4 +1,4 @@
-.. include:: README.md
+.. include:: ../README.md
    :parser: myst_parser.sphinx_
 
 .. toctree::
@@ -15,10 +15,3 @@
    howto_sl0_df_helpers
    howto_conversation_manager
    howto_events_routing
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
