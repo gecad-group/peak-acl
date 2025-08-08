@@ -8,11 +8,11 @@ version = "1.5.4"
 description = "FIPA-ACL parser and transport for the PEAK framework"
 authors = [{ name = "Santiago Bossa", email = "1211173@isep.ipp.pt" }]
 readme = { file = "README.md", content-type = "text/markdown" }
-license = { file = "LICENSE" }
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.9"
 keywords = ["FIPA", "ACL", "agent"]
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -28,9 +28,9 @@ dev = ["pytest", "pytest-asyncio", "black", "isort", "mypy"]
 docs = ["sphinx", "furo", "myst-parser"]
 
 [project.urls]
-Homepage = "https://github.com/gecad-group/peak-acl"
-Repository = "https://github.com/gecad-group/peak-acl"
-"Bug Tracker" = "https://github.com/gecad-group/peak-acl/issues"
+Homepage = "https://github.com/Santiago-1211173/peak-acl"
+Repository = "https://github.com/Santiago-1211173/peak-acl"
+"Bug Tracker" = "https://github.com/Santiago-1211173/peak-acl/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]
