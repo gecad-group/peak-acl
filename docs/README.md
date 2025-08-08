@@ -13,19 +13,6 @@ used independently in any Python project.
 
 ---
 
-## Table of Contents
-- [Features](#readme-features)
-- [Prerequisites](#readme-prerequisites)
-- [Installation](#readme-installation)
-- [Quick Start](#readme-quick-start)
-- [Working with SL0 / DF Helpers](#readme-working-with-sl0--df-helpers)
-- [Conversation Manager](#readme-conversation-manager)
-- [Events & Routing](#readme-events--routing)
-- [Roadmap](#readme-roadmap)
-- [License](#readme-license)
-
----
-
 (readme-features)=
 ## Features
 The library supports the full FIPA-ACL message model with dictionary-style
