@@ -4,11 +4,12 @@
 [![Python Versions](https://img.shields.io/pypi/pyversions/peak-acl)](https://pypi.org/project/peak-acl/)
 [![License](https://img.shields.io/badge/license-GPLv3-blue.svg)](LICENSE)
 
-`peak-acl` is a lightweight package that parses, builds and transports
-[FIPA-ACL](https://www.fipa.org/specs/fipa00061/SC00061G.html) messages with
-first-class support for JADE-compatible HTTP-MTP. It integrates with the
-[PEAK](https://github.com/gecad-group/peak-mas) framework but can be used in any
-Python project.
+`peak-acl` is a Python library for parsing, constructing, and transporting
+[FIPA-ACL](https://www.fipa.org/specs/fipa00061/SC00061G.html) messages. It
+offers an ANTLR-powered parser, utilities for building and dispatching
+messages, and optional HTTP-MTP transport compatible with JADE-based agents.
+While designed for the [PEAK](https://github.com/gecad-group/peak-mas)
+framework, it can also be used independently in any Python project.
 
 ---
 
@@ -20,29 +21,24 @@ Python project.
 - [Working with SL0 / DF Helpers](#working-with-sl0--df-helpers)
 - [Conversation Manager](#conversation-manager)
 - [Events & Routing](#events--routing)
-- [Documentation](#documentation)
 - [Roadmap](#roadmap)
-- [Contributing](#contributing)
 - [License](#license)
 
 ---
 
 ## Features
-- ✅ **Full FIPA-ACL message model** (`performative`, `sender`, `receiver`, ...).
-- ✅ **Dict-like access** on `AclMessage` (`msg["content"]`, `msg.get(...)`).
-- ✅ **ANTLR-based FIPA-ACL parser** → `AclMessage` objects.
-- ✅ **SL0 helpers** for Directory Facilitator interactions.
-- ✅ **HTTP-MTP client & server** with automatic retries.
-- ✅ **Conversation manager** implementing the FIPA-Request protocol.
-- ✅ **Utilities** for message routing and async helpers.
+The library supports the full FIPA-ACL message model with dictionary-style
+access, provides SL0 helpers for Directory Facilitator interactions, includes an
+ANTLR-based parser and optional HTTP-MTP client and server with automatic
+retries, and offers a conversation manager plus routing utilities for
+asynchronous workflows.
 
 ---
 
 ## Prerequisites
-- Python **>= 3.9**
-- Optional: a JADE ACC or compatible HTTP-MTP endpoint.
-
-Development requirements are provided under the `dev` extra (pytest, mypy, black, isort, ...).
+Python **3.9 or later** is required. A JADE ACC or compatible HTTP-MTP endpoint
+is optional. Development requirements such as `pytest`, `mypy`, `black`, and
+`isort` are available via the `dev` extra.
 
 ---
 
@@ -120,12 +116,6 @@ low-level `send_fn` and await the resulting `Future` for the reply.
 ## Events & Routing
 `InboundDispatcher` plus `MessageTemplate` allow pattern-based callbacks for
 incoming ACLs. See `peak_acl.runtime.classify_message` for predefined kinds.
-
----
-
-## Documentation
-The Sphinx docs use the Furo theme with custom tweaks for larger fonts,
-softer code blocks and a narrower navigation sidebar to improve readability.
 
 ---
 
