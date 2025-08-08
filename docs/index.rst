@@ -3,9 +3,8 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents
+   :hidden:
 
-   self
    quickstart
    modules
 
