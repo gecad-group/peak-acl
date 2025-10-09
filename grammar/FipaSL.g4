@@ -1,12 +1,11 @@
 // ======================================================================
 //  FIPA-SL  (Specification SC00061G, SC00070J)
 //  Grammar ANTLR‑4  •  Output target: Python3
-//  Autor: peak-mas PoC
 // ======================================================================
 
 grammar FipaSL;
 
-// ────── sintaxe de S‑expressões ────────────────────────────────────────
+// ─────────────────────────────────────────────
 sexpr        : list | atom ;
 list         : LPAREN elements? RPAREN ;
 elements     : sexpr+ ;
@@ -16,7 +15,7 @@ atom         : QUOTE         #stringAtom
              | SYMBOL        #symbolAtom
              ;
 
-// ────── léxico ─────────────────────────────────────────────────────────
+// ────── lexer ─────────────────────────────────
 LPAREN  : '(' ;
 RPAREN  : ')' ;
 QUOTE   : '"' ( '\\' . | ~["\\] )* '"' ;

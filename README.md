@@ -1,4 +1,4 @@
-# peak-acl: FIPA-ACL parser & HTTP-MTP helpers for PEAK/JADE
+# PEAK-ACL: Python-based framework for heterogenous agent communities - Agent Communication Language
 
 [![PyPI](https://img.shields.io/pypi/v/peak-acl)](https://pypi.org/project/peak-acl/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/peak-acl)](https://pypi.org/project/peak-acl/)
