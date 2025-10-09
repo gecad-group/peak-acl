@@ -56,19 +56,12 @@ ecosystem, it can be used **standalone** in any Python project.
 * **HTTP-MTP:** compatible with **JADE ACC** or other endpoints like
   `http://<host>:7777/acc` or `http://<jade-host>:7778/acc`.
 
-> If you use this inside **PEAK**, it plugs into your agents’ workflows; if you
-> don’t, you can still parse/build/transport ACL messages independently.
-
 ---
 
 ## Installation
 
 ```bash
-pip install peak-acl
-
-# optional extras
-pip install "peak-acl[dev]"   # pytest, pytest-asyncio, black, isort, mypy
-pip install "peak-acl[docs]"  # sphinx, furo, myst-parser
+pip install "peak-acl @ git+https://https://github.com/gecad-group/peak-acl"
 ```
 
 ---
@@ -182,9 +175,8 @@ common cases quickly.
 ## Roadmap
 
 * Richer **SL** (beyond SL0) support.
-* Optional **IPv6-aware** networking utilities.
+* Optional **IIOP-MTP** networking utilities.
 * Extended error handling for **user-defined parameters**.
-* **Sphinx** documentation site populated from docstrings.
 
 ---
 
@@ -217,7 +209,6 @@ black --check .
 
 **Commit style**
 
-* Format with **black** and **isort**.
 * Follow **Conventional Commits** for messages.
 
 ---

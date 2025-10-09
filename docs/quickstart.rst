@@ -10,9 +10,6 @@ Quick Start
    .. note::
       ``peak-acl`` requires Python 3.9 or newer.
 
-   .. code-block:: bash
-
-      pip install peak-acl
 
 #. **Parse a message**
 
