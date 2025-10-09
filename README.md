@@ -32,6 +32,7 @@ ecosystem, it can be used **standalone** in any Python project.
 * [Events & Routing](#events--routing)
 * [Roadmap](#roadmap)
 * [Contributing](#contributing)
+* [Changelog](#changelog)
 * [License](#license)
 
 ---
@@ -218,6 +219,12 @@ black --check .
 
 * Format with **black** and **isort**.
 * Follow **Conventional Commits** for messages.
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a history of notable changes to `peak-acl`.
 
 ---
 
