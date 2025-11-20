@@ -22,7 +22,6 @@ ecosystem, it can be used **standalone** in any Python project.
 * [Compatibility](#compatibility)
 * [Installation](#installation)
 * [Quick Start](#quick-start)
-
   * [Parse an ACL string](#parse-an-acl-string)
   * [Build and serialize an AclMessage](#build-and-serialize-an-aclmessage)
   * [Send over HTTP-MTP (client)](#send-over-http-mtp-client)

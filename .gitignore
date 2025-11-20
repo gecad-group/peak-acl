@@ -2,9 +2,6 @@
 __pycache__/
 *.py[cod]
 
-# Ignore Sphinx build artifacts
-/docs/_build/
-
 # Ignore build metadata
 *.egg-info/
 
