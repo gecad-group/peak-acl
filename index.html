@@ -464,17 +464,33 @@ python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </s
 <span class="c1"># Windows (PowerShell):</span>
 <span class="c1"># .venv\Scripts\Activate.ps1</span>
 
-pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
 </pre></div>
 </div>
-<p><strong>Run checks</strong></p>
+</section>
+<section id="testing-coverage">
+<h2>Testing &amp; Coverage<a class="headerlink" href="#testing-coverage" title="Link to this heading">¶</a></h2>
+<p><strong>Install development extras</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
+</pre></div>
+</div>
+<p><strong>Run the test suite</strong></p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest
-mypy<span class="w"> </span>peak_acl
-isort<span class="w"> </span>-c<span class="w"> </span>.
-black<span class="w"> </span>--check<span class="w"> </span>.
 </pre></div>
 </div>
-<p><strong>Commit style</strong></p>
+<p><strong>Generate coverage (terminal + HTML report)</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pytest<span class="w"> </span>--cov<span class="o">=</span>peak_acl<span class="w"> </span>--cov-report<span class="o">=</span>term-missing<span class="w"> </span>--cov-report<span class="o">=</span>html
+</pre></div>
+</div>
+<p>This writes an HTML report to htmlcov/index.html. To open it in your browser:</p>
+<ul class="simple">
+<li><p>Windows (PowerShell): start .\htmlcov\index.html</p></li>
+<li><p>macOS: open htmlcov/index.html</p></li>
+<li><p>Linux: xdg-open htmlcov/index.html</p></li>
+</ul>
+</section>
+<section id="commit-style">
+<h2>Commit style<a class="headerlink" href="#commit-style" title="Link to this heading">¶</a></h2>
 <ul class="simple">
 <li><p>Follow <strong>Conventional Commits</strong> for messages.</p></li>
 </ul>
@@ -579,6 +595,8 @@ Public License v3.0</strong>. See <a class="reference internal" href="#LICENSE">
 <li><a class="reference internal" href="#events-routing">Events &amp; Routing</a></li>
 <li><a class="reference internal" href="#roadmap">Roadmap</a></li>
 <li><a class="reference internal" href="#contributing">Contributing</a></li>
+<li><a class="reference internal" href="#testing-coverage">Testing &amp; Coverage</a></li>
+<li><a class="reference internal" href="#commit-style">Commit style</a></li>
 <li><a class="reference internal" href="#changelog">Changelog</a></li>
 <li><a class="reference internal" href="#license">License</a></li>
 </ul>
