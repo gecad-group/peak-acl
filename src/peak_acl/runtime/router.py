@@ -29,15 +29,15 @@ Centralizes logic to:
 
 from __future__ import annotations
 
-from typing import Tuple, Any
+from typing import Any, Tuple
 
-from .event import Kind
-from ..message.envelope import Envelope
 from ..message.acl import AclMessage
 from ..message.aid import AgentIdentifier
-from . import df_manager
-from . import content as content_utils
+from ..message.envelope import Envelope
 from ..sl import sl0
+from . import content as content_utils
+from . import df_manager
+from .event import Kind
 
 
 # --------------------------------------------------------------------------- #

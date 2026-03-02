@@ -39,6 +39,7 @@ from . import sl0
 @dataclass
 class Property:
     """Simple name/value pair used inside :class:`ServiceDescription`."""
+
     name: str
     value: str
 
@@ -46,6 +47,7 @@ class Property:
 @dataclass
 class ServiceDescription:
     """Service descriptor in FIPA-AM terms."""
+
     name: Optional[str] = None
     type: Optional[str] = None
     languages: List[str] = field(default_factory=list)
@@ -57,6 +59,7 @@ class ServiceDescription:
 @dataclass
 class AgentDescription:
     """Agent descriptor (wrapper around an :class:`AgentIdentifier`)."""
+
     name: Optional[AgentIdentifier] = None
     languages: List[str] = field(default_factory=list)
     ontologies: List[str] = field(default_factory=list)

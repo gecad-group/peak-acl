@@ -34,14 +34,14 @@ Supported flow:
 from __future__ import annotations
 
 import asyncio
-import secrets
 import logging
+import secrets
 from dataclasses import dataclass, field
-from typing import Dict, Optional, Callable, Awaitable
 from functools import partial
+from typing import Awaitable, Callable, Dict, Optional
 
-from ..message.aid import AgentIdentifier
 from ..message.acl import AclMessage
+from ..message.aid import AgentIdentifier
 from ..sl import sl0  # serialize SL0 payloads
 
 _log = logging.getLogger("peak_acl.conversation")
@@ -53,6 +53,7 @@ _log = logging.getLogger("peak_acl.conversation")
 @dataclass
 class _Conversation:
     """Internal state holder for a single conversation."""
+
     conv_id: str
     future: asyncio.Future
     state: str = "pending"  # pending → {agreed|refused} → done
@@ -136,7 +137,7 @@ class ConversationManager:
         )
 
         loop = asyncio.get_running_loop()
-        fut: asyncio.Future = loop.create_future()  
+        fut: asyncio.Future = loop.create_future()
         conv = _Conversation(conv_id, fut, request_msg=req)
         self._convs[conv_id] = conv
 
@@ -192,7 +193,9 @@ class ConversationManager:
         if not conv:
             return
         if not conv.future.done():
-            conv.future.set_exception(asyncio.TimeoutError(f"Conversation {conv_id} timed out"))
+            conv.future.set_exception(
+                asyncio.TimeoutError(f"Conversation {conv_id} timed out")
+            )
         # Future done-callback will remove it from the dict
 
 

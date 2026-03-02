@@ -9,25 +9,30 @@ events.
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
 import contextlib
+from dataclasses import dataclass, field
 from typing import (
-    Sequence, Tuple, Optional, Iterable, Union,
-    AsyncIterator, Any,
+    Any,
+    AsyncIterator,
+    Iterable,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
 )
 
 import aiohttp.web
 
-from ..message.aid import AgentIdentifier
 from ..message.acl import AclMessage
+from ..message.aid import AgentIdentifier
 from ..message.envelope import Envelope
-from ..transport.http_mtp import HttpMtpServer, start_server
-from ..transport.http_client import HttpMtpClient
-from . import df_manager, event, router
 from ..sl import sl0
-from .dispatcher import InboundDispatcher, Callback
-from .message_template import MessageTemplate
+from ..transport.http_client import HttpMtpClient
+from ..transport.http_mtp import HttpMtpServer, start_server
+from . import df_manager, event, router
 from .conversation import ConversationManager
+from .dispatcher import Callback, InboundDispatcher
+from .message_template import MessageTemplate
 
 
 # --------------------------------------------------------------------------- #
@@ -39,7 +44,7 @@ def _first_url(ai: AgentIdentifier) -> str:
 
 # --------------------------------------------------------------------------- #
 @dataclass
-class _RawMsg:                # só para a fila interna
+class _RawMsg:  # só para a fila interna
     env: Envelope
     acl: AclMessage
 
@@ -69,8 +74,9 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
     >>> async for evt in ep:
     ...     print(evt.kind)
     """
+
     my_aid: AgentIdentifier
-    inbox: asyncio.Queue                # (Envelope, AclMessage) do servidor
+    inbox: asyncio.Queue  # (Envelope, AclMessage) do servidor
     client: HttpMtpClient
     server: HttpMtpServer
     runner: aiohttp.web.AppRunner
@@ -79,7 +85,7 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
 
     # ponto 5
     dispatcher: InboundDispatcher = field(default_factory=InboundDispatcher)
-    conv_mgr:   ConversationManager | None = None
+    conv_mgr: ConversationManager | None = None
 
     # fila de eventos para quem iterar sobre o endpoint
     _events: asyncio.Queue[event.MsgEvent] = field(
@@ -88,9 +94,17 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
     _bg_task: Optional[asyncio.Task] = None
 
     # ---------------------------- DF helpers ------------------------------ #
-    async def register_df(self, df_aid, services, *,
-                          df_url=None, languages=(), ontologies=(),
-                          protocols=(), ownership=()):
+    async def register_df(
+        self,
+        df_aid,
+        services,
+        *,
+        df_url=None,
+        languages=(),
+        ontologies=(),
+        protocols=(),
+        ownership=(),
+    ):
         await df_manager.register(
             my_aid=self.my_aid,
             df_aid=df_aid,
@@ -103,8 +117,15 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
             df_url=df_url,
         )
 
-    async def search_df(self, *, service_name=None, service_type=None,
-                        max_results=None, df_aid=None, df_url=None):
+    async def search_df(
+        self,
+        *,
+        service_name=None,
+        service_type=None,
+        max_results=None,
+        df_aid=None,
+        df_url=None,
+    ):
         df_ai = df_aid or self.df_aid
         if df_ai is None:
             raise ValueError("search_df() sem df_aid definido.")
@@ -175,9 +196,9 @@ class CommEndpoint(AsyncIterator[event.MsgEvent]):
             raise ValueError("send_acl() sem receivers.")
 
         content_str = (
-            None if content is None else
-            content if isinstance(content, str) else
-            sl0.dumps(content)
+            None
+            if content is None
+            else content if isinstance(content, str) else sl0.dumps(content)
         )
 
         msg = AclMessage(
@@ -317,7 +338,7 @@ async def start_endpoint(
     """
     from urllib.parse import urlparse
 
-    port = (urlparse(my_aid.addresses[0]).port or 80)
+    port = urlparse(my_aid.addresses[0]).port or 80
     client = http_client or HttpMtpClient()
 
     server, runner, site = await start_server(

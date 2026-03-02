@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional
 
 from .aid import AgentIdentifier
 
+
 # --------------------------------------------------------------------------- #
 # _norm_performative
 # --------------------------------------------------------------------------- #

@@ -31,12 +31,11 @@ Public API
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Iterable, List, Optional
 
-from ..message.aid import AgentIdentifier
 from ..message.acl import AclMessage
-from datetime import timezone
+from ..message.aid import AgentIdentifier
 
 
 # --------------------------------------------------------------------------- #

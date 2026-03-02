@@ -27,14 +27,14 @@ value (including the generated boundary).
 
 from __future__ import annotations
 
-from typing import Tuple
-from datetime import datetime, timezone
 import uuid
+from datetime import datetime, timezone
+from typing import Tuple
 
-from ..message.serialize import dumps
+from ..message.acl import AclMessage
 from ..message.aid import AgentIdentifier
 from ..message.envelope import Envelope
-from ..message.acl import AclMessage
+from ..message.serialize import dumps
 
 # --------------------------------------------------------------------------- #
 # Constants

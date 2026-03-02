@@ -71,6 +71,7 @@ __all__ = [
 @dataclass
 class ServiceDescription:
     """SL0 ``service-description`` node."""
+
     name: Optional[str] = None
     type: Optional[str] = None
     languages: List[str] = field(default_factory=list)
@@ -83,6 +84,7 @@ class ServiceDescription:
 @dataclass
 class DfAgentDescription:
     """SL0 ``df-agent-description`` node."""
+
     name: Optional[AgentIdentifier] = None
     services: List[ServiceDescription] = field(default_factory=list)
     languages: List[str] = field(default_factory=list)
@@ -482,7 +484,12 @@ def _build_dfad(e: Any) -> DfAgentDescription:
 # --- extractors ------------------------------------------------------------ #
 def _extract_sequence(e: Any) -> List[str]:
     """Extract a sequence list from an AST node."""
-    if isinstance(e, list) and e and isinstance(e[0], str) and e[0].lower() == "sequence":
+    if (
+        isinstance(e, list)
+        and e
+        and isinstance(e[0], str)
+        and e[0].lower() == "sequence"
+    ):
         return [str(x) for x in e[1:]]
     if isinstance(e, list):
         return [str(x) for x in e]

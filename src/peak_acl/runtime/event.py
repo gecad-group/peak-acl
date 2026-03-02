@@ -29,11 +29,11 @@ End users (agents) only deal with :class:`MsgEvent`, which bundles the original
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal, Any
+from typing import Any, Literal
 
+from ..message.acl import AclMessage
 from ..message.aid import AgentIdentifier
 from ..message.envelope import Envelope
-from ..message.acl import AclMessage
 
 # --------------------------------------------------------------------------- #
 # Kind discriminator for runtime-classified messages.

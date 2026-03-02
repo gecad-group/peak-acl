@@ -27,9 +27,9 @@ by JADE and common FIPA tools.
 
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 from typing import List
-import xml.etree.ElementTree as ET
 
 
 # --------------------------------------------------------------------------- #

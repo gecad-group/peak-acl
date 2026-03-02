@@ -29,7 +29,7 @@ Raises ``ValueError`` on syntax errors (tokenization or parsing).
 
 from __future__ import annotations
 
-from antlr4 import InputStream, CommonTokenStream
+from antlr4 import CommonTokenStream, InputStream
 
 from ..generated.ACLLexer import ACLLexer
 from ..generated.ACLParser import ACLParser
