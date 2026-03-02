@@ -28,4 +28,5 @@ need to keep quotes when emitted by ``dumps()``.
 
 class QuotedStr(str):
     """Marker for values parsed from STRING tokens that should stay quoted."""
+
     pass

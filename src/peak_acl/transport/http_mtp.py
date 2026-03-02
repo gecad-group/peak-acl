@@ -56,7 +56,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import re
-from typing import Awaitable, Callable, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Awaitable, Callable, Optional, Tuple
 
 from aiohttp import web
 
@@ -222,7 +222,9 @@ class HttpMtpServer:
 
     def __init__(
         self,
-        on_message: Optional[Callable[[Envelope, "AclMessage"], Awaitable[None]]] = None,
+        on_message: Optional[
+            Callable[[Envelope, "AclMessage"], Awaitable[None]]
+        ] = None,
         *,
         client_max_size: int = MAX_REQUEST_SIZE,
         loop: Optional[asyncio.AbstractEventLoop] = None,

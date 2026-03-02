@@ -28,13 +28,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Tuple
 
-from ..generated.ACLVisitor import ACLVisitor
 from ..generated.ACLParser import ACLParser
-
+from ..generated.ACLVisitor import ACLVisitor
 from ..message.acl import AclMessage
-from .types import QuotedStr  # keep compatibility
 from .parse_helpers import to_aid, to_aid_list, to_datetime
-
+from .types import QuotedStr  # keep compatibility
 
 # Slots allowed at root level (case-insensitive)
 ALLOWED_ROOT = {

@@ -27,9 +27,9 @@ It includes XML (de)serialization helpers to interoperate with JADE/FIPA tools.
 
 from __future__ import annotations
 
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timezone
-import xml.etree.ElementTree as ET
 
 from .aid import AgentIdentifier
 
@@ -112,9 +112,11 @@ class Envelope:
 
         ET.SubElement(params, "acl-representation").text = self.acl_rep
         ET.SubElement(params, "payload-length").text = str(self.payload_length)
-        ET.SubElement(params, "date").text = (
-            self.date.astimezone(timezone.utc).strftime(RFC_FMT)[:-3]  # trim µs→ms
-        )
+        ET.SubElement(params, "date").text = self.date.astimezone(
+            timezone.utc
+        ).strftime(RFC_FMT)[
+            :-3
+        ]  # trim µs→ms
 
         # intended-receiver == to
         params.append(self.to_.to_xml_elem("intended-receiver"))

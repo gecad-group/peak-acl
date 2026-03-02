@@ -1,8 +1,9 @@
 import re
-from peak_acl.message import AgentIdentifier, AclMessage, Envelope
+
+from peak_acl.message import AclMessage, AgentIdentifier, Envelope
+from peak_acl.parser import parse
 from peak_acl.transport import build_multipart
 from peak_acl.transport.http_mtp import _extract_envelope_acl
-from peak_acl.parser import parse
 
 
 def test_build_multipart_roundtrip():

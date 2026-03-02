@@ -31,11 +31,12 @@ Public API
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import List, Any
+from typing import Any, List
 
 from antlr4.tree.Tree import ParseTree
-from ..generated.FipaSLVisitor import FipaSLVisitor
+
 from ..generated.FipaSLParser import FipaSLParser
+from ..generated.FipaSLVisitor import FipaSLVisitor
 
 
 # --------------------------------------------------------------------------- #
@@ -44,24 +45,28 @@ from ..generated.FipaSLParser import FipaSLParser
 @dataclass
 class SLString:
     """String literal node (quotes removed)."""
+
     text: str
 
 
 @dataclass
 class SLNumber:
     """Numeric literal node (stored as float)."""
+
     value: float
 
 
 @dataclass
 class SLVar:
     """Variable node (e.g., ``?x``)."""
+
     name: str
 
 
 @dataclass
 class SLFunc:
     """Function application node: ``(name arg1 arg2 ...)``."""
+
     name: str
     args: List[Any] = field(default_factory=list)  # Any → other AST nodes
 
@@ -69,6 +74,7 @@ class SLFunc:
 @dataclass
 class SLAction:
     """``(action actor inner)`` construct."""
+
     actor: Any  # usually an AgentIdentifier; kept generic
     inner: Any  # inner term/function of the action
 
@@ -76,6 +82,7 @@ class SLAction:
 @dataclass
 class SLSentence:
     """Top-level SL sentence: typically ``(inform ...)`` / ``(request ...)``."""
+
     performative: str
     slots: List[Any] = field(default_factory=list)
 
@@ -165,5 +172,3 @@ def build_ast(tree: ParseTree):
     """Shortcut: take a parse tree and return the built AST (:class:`SLSentence`)."""
     visitor = ASTBuilder()
     return visitor.visit(tree)
-
-

@@ -38,9 +38,9 @@ from __future__ import annotations
 
 from typing import Any
 
+from ..sl import sl0  # import whole module to avoid circular imports
 from .acl import AclMessage
 from .aid import AgentIdentifier
-from ..sl import sl0  # import whole module to avoid circular imports
 
 
 # --------------------------------------------------------------------------- #

@@ -30,9 +30,9 @@ from __future__ import annotations
 import asyncio
 from typing import Awaitable, Callable, List, Tuple
 
-from .message_template import MessageTemplate
 from ..message.acl import AclMessage
 from ..message.aid import AgentIdentifier
+from .message_template import MessageTemplate
 
 # Signature of registered callbacks
 Callback = Callable[[AgentIdentifier, AclMessage], Awaitable[None]]

@@ -1,17 +1,18 @@
-from peak_acl import parse, dumps
 import pytest
 
+from peak_acl import dumps, parse
+
 RAW_SIMPLE = (
-    '(inform '
-    ':sender (agent-identifier :name a) '
-    ':receiver (set (agent-identifier :name b)) '
+    "(inform "
+    ":sender (agent-identifier :name a) "
+    ":receiver (set (agent-identifier :name b)) "
     ':content "hi")'
 )
 
 RAW_NESTED = (
-    '(proxy '
-    ':sender (agent-identifier :name a) '
-    ':receiver (set (agent-identifier :name b)) '
+    "(proxy "
+    ":sender (agent-identifier :name a) "
+    ":receiver (set (agent-identifier :name b)) "
     ':content (request :sender (agent-identifier :name a) :content "turn_on"))'
 )
 
@@ -26,4 +27,4 @@ def test_round_trip(raw):
 
 def test_missing_content_raises():
     with pytest.raises(ValueError):
-        parse('(inform :sender (agent-identifier :name a))')
+        parse("(inform :sender (agent-identifier :name a))")

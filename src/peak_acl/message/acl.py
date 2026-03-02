@@ -35,6 +35,7 @@ from typing import Any, Dict, List, Optional
 
 from .aid import AgentIdentifier
 
+
 # --------------------------------------------------------------------------- #
 # _norm_performative
 # --------------------------------------------------------------------------- #
@@ -54,7 +55,7 @@ def _norm_performative(p: str) -> str:
 # --------------------------------------------------------------------------- #
 @dataclass
 class AclMessage:
-    """In-memory representation of a FIPA-ACL message.
+    """In-memory string representation of a FIPA-ACL message.
 
     Attributes
     ----------

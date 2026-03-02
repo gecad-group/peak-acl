@@ -1,21 +1,20 @@
 """Runtime helpers: conversation tracking, DF helpers, routers, etc."""
 
-from .runtime import CommEndpoint, start_endpoint
 from .conversation import ConversationManager
-from .dispatcher import InboundDispatcher, Callback
-from .message_template import MessageTemplate
 from .df_manager import (
-    register,
-    deregister,
-    search_services,
     decode_df_reply,
+    deregister,
+    extract_search_results,
     is_df_done_msg,
     is_df_failure_msg,
-    extract_search_results,
+    register,
+    search_services,
 )
-from .event import MsgEvent, Kind
+from .dispatcher import Callback, InboundDispatcher
+from .event import Kind, MsgEvent
+from .message_template import MessageTemplate
 from .router import classify_message
-
+from .runtime import CommEndpoint, start_endpoint
 
 __all__ = [
     "CommEndpoint",

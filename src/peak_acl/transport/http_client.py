@@ -40,8 +40,8 @@ from typing import Optional
 import aiohttp
 from aiohttp import ClientTimeout
 
-from ..message.aid import AgentIdentifier
 from ..message.acl import AclMessage
+from ..message.aid import AgentIdentifier
 from .multipart import build_multipart
 
 __all__ = ["HttpMtpClient", "HttpMtpError"]
@@ -148,7 +148,9 @@ class HttpMtpClient:
         delay = self.backoff_base
         while True:
             try:
-                async with self.session.post(acc_url, data=body, headers=headers) as resp:
+                async with self.session.post(
+                    acc_url, data=body, headers=headers
+                ) as resp:
                     if resp.status == 200:
                         log.info("Sent to %s (status 200)", acc_url)
                         return

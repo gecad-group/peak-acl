@@ -36,13 +36,13 @@ The module builds SL0/FIPA-AM compliant payloads, sends them via an
 
 from __future__ import annotations
 
-from typing import Iterable, Optional, Sequence, Tuple, Union, List
+from typing import Iterable, List, Optional, Sequence, Tuple, Union
 
-from ..message.aid import AgentIdentifier
 from ..message.acl import AclMessage
+from ..message.aid import AgentIdentifier
+from ..sl import fipa_am, sl0
 from ..transport.http_client import HttpMtpClient
 from .content import decode_content
-from ..sl import sl0, fipa_am
 
 __all__ = [
     "register",
@@ -233,6 +233,7 @@ def decode_df_reply(msg: AclMessage):
         for it in payload:
             if isinstance(it, sl0.DfAgentDescription):
                 from ..sl import fipa_am
+
                 ads.append(fipa_am.from_sl0(it))  # type: ignore[arg-type]
         if ads:
             return ads
@@ -243,12 +244,14 @@ def decode_df_reply(msg: AclMessage):
 def is_df_done_msg(msg: AclMessage) -> bool:
     """Return True if the DF reply decodes to an ``sl0.Done``."""
     from ..sl import sl0 as _sl0
+
     return isinstance(decode_df_reply(msg), _sl0.Done)
 
 
 def is_df_failure_msg(msg: AclMessage) -> bool:
     """Return True if the DF reply decodes to an ``sl0.Failure``."""
     from ..sl import sl0 as _sl0
+
     return isinstance(decode_df_reply(msg), _sl0.Failure)
 
 
@@ -283,7 +286,9 @@ def extract_search_results_from_value(
     # val may be ['set', dfad, ...] or a pure list or parsed AST list
     if isinstance(val, list):
         items = (
-            val[1:] if val and isinstance(val[0], str) and val[0].lower() == "set" else val
+            val[1:]
+            if val and isinstance(val[0], str) and val[0].lower() == "set"
+            else val
         )
         for it in items:
             # already a DfAgentDescription?

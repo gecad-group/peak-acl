@@ -36,9 +36,9 @@ from __future__ import annotations
 from typing import Any
 
 from ..message.acl import AclMessage
+from ..sl import sl0
 from ..sl.sl_parser import parse
 from ..sl.sl_visitor import build_ast
-from ..sl import sl0
 
 
 # --------------------------------------------------------------------------- #
@@ -71,7 +71,11 @@ def decode_content(msg: AclMessage) -> Any:
       value is returned unchanged.
     """
     txt = msg.content
-    if not (isinstance(txt, str) and msg.language and msg.language.lower().startswith("fipa-sl")):
+    if not (
+        isinstance(txt, str)
+        and msg.language
+        and msg.language.lower().startswith("fipa-sl")
+    ):
         return txt  # Not SL → return as-is
 
     clean = txt.strip()
@@ -80,8 +84,8 @@ def decode_content(msg: AclMessage) -> Any:
 
     # 1) Full grammar (ANTLR) -------------------------------------------- #
     try:
-        tree = parse(clean)           # ANTLR parse-tree
-        return build_ast(tree)        # Rich AST (SLSentence, …)
+        tree = parse(clean)  # ANTLR parse-tree
+        return build_ast(tree)  # Rich AST (SLSentence, …)
     except Exception:
         # 2) SL0 compatibility ------------------------------------------- #
         try:

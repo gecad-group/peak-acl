@@ -8,8 +8,7 @@ version = "1.5.4"
 description = "FIPA-ACL parser and transport for the PEAK framework"
 authors = [{ name = "Santiago Bossa", email = "1211173@isep.ipp.pt" }]
 readme = { file = "README.md", content-type = "text/markdown" }
-license = "GPL-3.0-or-later"
-license-files = ["LICENSE"]
+license = { text = "GPL-3.0-or-later" }
 requires-python = ">=3.9"
 keywords = ["FIPA", "ACL", "agent"]
 classifiers = [
@@ -24,7 +23,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest", "pytest-asyncio", "black", "isort", "mypy"]
+dev = ["pytest", "pytest-asyncio", "pytest-cov", "black", "isort", "mypy"]
 docs = ["sphinx", "furo", "myst-parser"]
 
 [project.urls]
@@ -34,3 +33,26 @@ Repository = "https://github.com/Santiago-1211173/peak-acl"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+
+[tool.black]
+extend-exclude = '''
+/(\n  \.venv\n  | _venv\n  | venv\n  | build\n  | dist\n)/
+'''
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+
+
+[tool.coverage.run]
+branch = false
+source = ["peak_acl"]
+omit = [
+  "src/peak_acl/generated/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+

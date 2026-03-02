@@ -29,14 +29,16 @@ Exports
 - ``__version__`` – package version (PEP 440), fallback ``"0.0.0"``
 """
 
-from importlib.metadata import version as _version, PackageNotFoundError
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
+
+from .message.acl import AclMessage
+from .message.serialize import dumps
 
 # --------------------------------------------------------------------------- #
 # Public API re-exports
 # --------------------------------------------------------------------------- #
 from .parser import parse
-from .message.acl import AclMessage
-from .message.serialize import dumps
 
 __all__: list[str] = ["parse", "AclMessage", "dumps", "__version__"]
 
