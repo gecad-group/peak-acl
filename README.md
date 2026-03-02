@@ -194,19 +194,30 @@ source .venv/bin/activate
 # Windows (PowerShell):
 # .venv\Scripts\Activate.ps1
 
-pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 ```
 
-**Run checks**
+## Testing & Coverage
 
+**Install development extras**
+```bash
+python -m pip install -e ".[dev]"
+```
+**Run the test suite**
 ```bash
 pytest
-mypy peak_acl
-isort -c .
-black --check .
 ```
+**Generate coverage (terminal + HTML report)**
+```bash
+pytest --cov=peak_acl --cov-report=term-missing --cov-report=html
+```
+This writes an HTML report to htmlcov/index.html. To open it in your browser:
 
-**Commit style**
+* Windows (PowerShell): start .\htmlcov\index.html
+* macOS: open htmlcov/index.html
+* Linux: xdg-open htmlcov/index.html
+
+## Commit style
 
 * Follow **Conventional Commits** for messages.
 
